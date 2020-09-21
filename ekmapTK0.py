@@ -2,7 +2,7 @@
 # ekmapTK.py
 # containing function and variant
 
-# from matplotlib import pyplot as plt
+# import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 # from time import time
