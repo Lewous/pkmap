@@ -3,9 +3,9 @@
 # ekmapTK using pandas
 # keep original ekmapTK as ekmapTK0
 
-from math import fabs
-from math import log
-from math import nan
+from numpy import fabs
+from numpy import log
+from numpy import nan
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -133,7 +133,8 @@ def data_read(filepath = "", ):
 
     # appliance quantity
     appQ = len(data0.columns) - 4
-    print("find '" + str(appQ) + "' appliance")
+    print("find `" + str(appQ) + "' appliance with `" + 
+            str(len(data0.index)) + "' lines")
 
     data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) for k in range(appQ)}) 
     # data0.columns is [Time  Unix  Aggregate  app1  app2  app3  app4  app5  app6  app7  app8  app9  Issues]
@@ -143,7 +144,24 @@ def data_read(filepath = "", ):
     dx = data0.loc[:, 'Appliance1': 'Appliance9']
     data0.loc[:, 'Appliance1': 'Appliance9'] = (dx > threshold)
 
-    # counts
+    '''
+    counting
+    store statics in a dict:
+    val0 = {
+        '11100010': 53,        # just an example
+        ......
+    }
+    '''
+    # create a dict templet
+    # and then fill in the container
+    val0 = {}
+    for k in GC(4):
+        for j in GC(4):
+            t = k + j   # is str like '11110001'
+            val0[t] = nan
+            print(t+': ' + str(val0[t]))
+    # print([k + ': ' + str(val0[k]) for k in val0.keys()])
+    
 
 
     
