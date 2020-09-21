@@ -9,8 +9,8 @@ from pandas import read_csv
 from tqdm import tqdm
 # from time import time
 
-TOTAL_LINE = 6960002
-FILE_PATH = ""
+# TOTAL_LINE = 6960002
+FILE_PATH = 'REFIT/CLEAN_House1.csv'
 
 
 def line_count(filepath):
@@ -40,13 +40,54 @@ def line_count(filepath):
     return count
 
 
+def filter(a, width = 3):
+    """
+    median filtrate executor
+
+    a: object to filter, an one dimensional list or tuple
+        need run len(a)
+    width: filter width, like 3, 5, ...
+    # orig: return original value if is True
+    #     return on/off value if is False
+
+    return: an a-size tuple created with same length as `a'
+    """
+    
+    half_width = int(0.5 * width)
+    b = (a[0], )
+
+    w2 = 1
+    while w2 < width - 2:
+        w2 += 2
+        half_w = int(0.5 * w2)
+        scope = a[:w2]
+        # print('w2 is ' + str(w2))
+        # print(scope)
+        b += (sorted(scope)[half_w], )
+
+    for kn in range(len(a) - width + 1):
+        scope = a[kn:kn+width]
+        # print(scope)
+        b += (sorted(scope)[half_width], )
+
+    w2 = width
+    while w2 > 1:
+        w2 -= 2
+        half_w = int(0.5 * w2)
+        scope = a[0-w2:]
+        # print('w2 is ' + str(w2))
+        # print(scope)
+        b += (sorted(scope)[half_w], )
+    return b
+
+
 def data_read(filepath = "", ):
     """
     ready data to plot
 
     filepath: a string, used as open(filepath,'rb')
     return: a dict with keys: unix, agg, app1, app2, ...
-    TOTAL_LINE: global variant in EKMApTK
+    # TOTAL_LINE: global variant in EKMApTK
 
     0. count total lines
     1. read csv file from REFIT
@@ -55,18 +96,28 @@ def data_read(filepath = "", ):
     4. filtrate to on/off data
 
     """
+    threshold = 5       # power data large than this view as on state
 
-    global TOTAL_LINE
+    # global TOTAL_LINE
     global FILE_PATH
     if filepath == "":
         filepath = FILE_PATH
-    filename = filepath.split('/')[-1]
-    
-    TOTAL_LINE = line_count(filepath)
+    filename = filepath.split('/')[-1].split('.')[:-1][0]
 
-    TOTAL_LINE = 10     # try frist 10 lines for testing
     with tqdm(leave = False, bar_format = "reading " + filename + " ...") as pybar:
         data0 = read_csv(filepath)
 
+    # appliance quantity
+    appQ = len(data0.columns) - 4
+    print("find '" + str(appQ) + "' appliance")
 
+    data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) for k in range(appQ)}) 
+    # data0.columns is [Time  Unix  Aggregate  app1  app2  app3  app4  app5  app6  app7  app8  app9  Issues]
 
+    # filter here 
+    # add later as not necessary
+    dx = data0.loc[:, 'Appliance1': 'Appliance9']
+    data0.loc[:, 'Appliance1': 'Appliance9'] = (dx > threshold)
+
+    
+    
