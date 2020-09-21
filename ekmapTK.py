@@ -3,6 +3,10 @@
 # ekmapTK using pandas
 # keep original ekmapTK as ekmapTK0
 
+from math import fabs
+from math import log
+from math import nan
+
 from pandas import DataFrame
 from pandas import read_csv
 
@@ -80,6 +84,26 @@ def filter(a, width = 3):
         b += (sorted(scope)[half_w], )
     return b
 
+def GC(n):
+    
+    """
+    generate `Gray Code' using self-calling function
+
+    n: an integer greater than zero (n>=0)
+    return: tuple (string type of binary code)
+
+    """
+
+    # Gray Code generator
+    n = int(fabs(n))
+    if n == 1:
+        return ('0', '1')
+    elif n == 0:
+        return ()
+    else:
+        a = GC(n-1)
+        return tuple(['0'+k for k in a] + ['1'+k for k in a[::-1]])
+
 
 def data_read(filepath = "", ):
     """
@@ -119,5 +143,7 @@ def data_read(filepath = "", ):
     dx = data0.loc[:, 'Appliance1': 'Appliance9']
     data0.loc[:, 'Appliance1': 'Appliance9'] = (dx > threshold)
 
-    
+    # counts
+
+
     
