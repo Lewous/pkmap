@@ -3,14 +3,18 @@
 # ekmapTK using pandas
 # keep original ekmapTK as ekmapTK0
 
+# from pandas.core.indexes.datetimes import date_range
+from ekmapTK0 import TOTAL_LINE
 from numpy import fabs
 from numpy import log
-from numpy import nan
+from numpy import nan, isnan
 
 from pandas import DataFrame
 from pandas import read_csv
 
 from tqdm import tqdm
+import re
+
 # from time import time
 
 # TOTAL_LINE = 6960002
@@ -122,25 +126,35 @@ def data_read(filepath = "", ):
     """
     threshold = 5       # power data large than this view as on state
 
-    # global TOTAL_LINE
+    global TOTAL_LINE
     global FILE_PATH
     if filepath == "":
         filepath = FILE_PATH
     filename = filepath.split('/')[-1].split('.')[:-1][0]
 
-    with tqdm(leave = False, bar_format = "reading " + filename + " ...") as pybar:
+    with tqdm(leave = False, 
+            bar_format = "reading " + filename + " ...") as pybar:
         data0 = read_csv(filepath)
 
+    TOTAL_LINE = len(data0.index)
     # appliance quantity
     appQ = len(data0.columns) - 4
     print("find `" + str(appQ) + "' appliance with `" + 
-            str(len(data0.index)) + "' lines")
+            str(TOTAL_LINE) + "' lines")
 
-    data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) for k in range(appQ)}) 
-    # data0.columns is [Time  Unix  Aggregate  app1  app2  app3  app4  app5  app6  app7  app8  app9  Issues]
+    # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) 
+    #     for k in range(appQ)}) 
+    # data0.columns is: 
+    #   ['Time', 'Unix', 'Aggregate', 'Appliance1', 'Appliance2', 'Appliance3',
+    #    'Appliance4', 'Appliance5', 'Appliance6', 'Appliance7', 'Appliance8',
+    #    'Appliance9', 'Issues']
 
+    '''
     # filter here 
-    # add later as not necessary
+    # add later as it's not necessary
+    '''
+    
+    # transfer to on/off value
     dx = data0.loc[:, 'Appliance1': 'Appliance9']
     data0.loc[:, 'Appliance1': 'Appliance9'] = (dx > threshold)
 
@@ -159,9 +173,31 @@ def data_read(filepath = "", ):
         for j in GC(4):
             t = k + j   # is str like '11110001'
             val0[t] = nan
-            print(t+': ' + str(val0[t]))
+            # print(t+': ' + str(val0[t]))
     # print([k + ': ' + str(val0[k]) for k in val0.keys()])
     
+    # fill in statics
+    # c2: choose 8 app to analysis
+    c2 = re.findall('Appliance[1,2,4-9]+', ''.join(data0.columns))
+    with tqdm(total = TOTAL_LINE, leave = False, ascii = True, 
+            bar_format = "counting...{l_bar}{bar}|{n_fmt}/{total_fmt}|") as pybar:
+    # for k in tqdm(data0.loc[:, c2].iterrows()):
+        for k in data0.loc[:, c2].iterrows():
+            # combinate new row as a key of a dict
+            nw = ''.join(k[1].astype('int8').astype('str'))
+            if isnan(val0[nw]):
+                val0[nw] = 1
+            elif val0[nw] > 0:
+                val0[nw] += 1
+            else:
+                Warning(({'nw':nw, 'Val0':val0[nw]}, 'not mentioned'))
+            pybar.update(1)
+    [print(k) for k in val0.items()]
 
 
-    
+if __name__ == "__main__":
+    f = 'REFIT/CLEAN_House1.csv'
+    data2 = data_read(f)
+
+    t = '='*6
+    print(t + 'done' + t)

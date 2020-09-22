@@ -19,5 +19,5 @@ data2 = dr(f)
 # total_line = data2[-1]
 # print(total_line)
 
-
-print('=====done========')
+t = '='*6
+print(t + 'done' + t)
