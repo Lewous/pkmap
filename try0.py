@@ -50,10 +50,10 @@ def do1(x, val):
 
     return val
 
-def do2(val, x):
-
+def do2(x):
+    val = {}
     for k in range(x[0], x[1]):
-        do1(k, val)
+        val = do1(k, val)
     
     # return val
     
@@ -73,27 +73,18 @@ if __name__ == "__main__":
     qu = Queue()
 
     tic = time()
-    TOTAL_LINE = 50000
-    x1 = linspace(0, TOTAL_LINE, num = 6, dtype = 'int')
+    TOTAL_LINE = 50000000
+    x1 = linspace(0, TOTAL_LINE, num = 15, dtype = 'int')
     x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
     print(x1)
-    pool = Pool()
+    
     # x2 is a generator
-    # with tqdm(total = TOTAL_LINE, leave = False, ascii = True, 
-    #         bar_format = "counting...{l_bar}{bar}|{n_fmt}/{total_fmt}|") as pybar:
-    with Manager() as manager:
-        val = manager.dict()
-        for k in x2:
-            # p = Process(target=do2, args=(val,(k[0], k[1])))
-            # p.start()
-            # p.join()
-            pool.apply_async(func=do2, args=(val,(k[0], k[1])))
-            # pool = Pool()
-            # qu.put(pybar)
-            # result = pool.map(do2, x2)
+    with tqdm(leave = False, bar_format = "Pooling ...") as pybar:
+        pool = Pool()
+        result = pool.map(do2, x2)
         pool.close()
         pool.join()
-        print(val.items())
+    print(val.items())
 
     toc = time()
     print(bt(toc-tic))
