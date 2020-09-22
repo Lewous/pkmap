@@ -9,9 +9,12 @@ from ekmapTK import beauty_time as bt
 
 from numpy import sqrt
 from numpy import pi
+from numpy import int8
+from numpy import linspace
 
 from time import time
 from multiprocessing import Pool
+from multiprocessing import Queue
 from tqdm import tqdm
 
 wt = 50      # width per part taken
@@ -30,25 +33,48 @@ itl = 1/wt   # interval  is 1/50
 
 
 # try multiprocessing
-def do1(x):
-    x = x+515000000
-    y = x**pi
-    return int(''.join(list(str(x))))
 
+val = {}
+
+def do1(x, val):
+
+    x = x+515000000
+    z = x**pi
+    y = int8(x)
+    if y in val.keys():
+        val[y] += 1
+    else:
+        val[y] = 1
+    int(''.join(list(str(int(z)))))
+
+    return val
+
+def do2(x):
+    val = {}
+    for k in range(x[0], x[1]):
+        val = do1(k, val)
+    
+    return val
+    
 
 if __name__ == "__main__":
+    qu = Queue()
+
     tic = time()
     TOTAL_LINE = 5000000
-    with tqdm(total = TOTAL_LINE, leave = False, ascii = True, 
-            bar_format = "Loading House1...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
+    x1 = linspace(0, TOTAL_LINE, num = 20, dtype = 'int')
+    x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
+    # x2 is a generator
 
-        for x in range(TOTAL_LINE):
-            x = x+515000000
-            y = x**pi
-            z = y**pi
-            z = int(''.join(list(str(int(z)))))
-            pybar.update(1)
+    pool = Pool()
+    
+    result = pool.map(do1, x2)
+    pool.close()
+    pool.join()
 
+    linspace()
     toc = time()
     print(bt(toc-tic))
+    print(val.items())
+    print(f'{result[0]=}')
 
