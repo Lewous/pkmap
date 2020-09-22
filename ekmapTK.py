@@ -4,20 +4,22 @@
 # keep original ekmapTK as ekmapTK0
 
 # from pandas.core.indexes.datetimes import date_range
-from ekmapTK0 import TOTAL_LINE
+# from ekmapTK0 import TOTAL_LINE
 from numpy import fabs
 from numpy import log
 from numpy import nan, isnan
+from numpy import divmod
 
-from pandas import DataFrame
+# from pandas import DataFrame
 from pandas import read_csv
 
+from time import time
 from tqdm import tqdm
 import re
 
 # from time import time
 
-# TOTAL_LINE = 6960002
+TOTAL_LINE = 6960002
 FILE_PATH = 'REFIT/CLEAN_House1.csv'
 
 
@@ -88,6 +90,7 @@ def filter(a, width = 3):
         b += (sorted(scope)[half_w], )
     return b
 
+
 def GC(n):
     
     """
@@ -107,6 +110,33 @@ def GC(n):
     else:
         a = GC(n-1)
         return tuple(['0'+k for k in a] + ['1'+k for k in a[::-1]])
+
+
+def beauty_time(time):
+    """
+    beauty time string
+    time: time in seconds
+    return: time in string
+
+    warning: using a feature published in python 3.8
+    """
+    d = 0
+    h = 0
+    m = 0
+    s = 0
+    str_time = ""
+    if time > 3600 * 24:
+        (d, time) = divmod(time, 3600*24)
+        str_time += f"{int(d)}d "
+    if time > 3600:
+        (h, time) = divmod(time, 3600)
+        str_time += f"{int(h)}h "
+    if time > 60:
+        (m, time) = divmod(time, 60)
+        str_time += f"{int(m)}m "
+    str_time += f"{int(time)}s"
+
+    return str_time
 
 
 def data_read(filepath = "", ):
@@ -172,19 +202,23 @@ def data_read(filepath = "", ):
     for k in GC(4):
         for j in GC(4):
             t = k + j   # is str like '11110001'
-            val0[t] = nan
+            val0[t] = nan       # for plot benfits
+            # val0[t] = 0
             # print(t+': ' + str(val0[t]))
     # print([k + ': ' + str(val0[k]) for k in val0.keys()])
     
     # fill in statics
-    # c2: choose 8 app to analysis
-    c2 = re.findall('Appliance[1,2,4-9]+', ''.join(data0.columns))
+    # c2: choose 8 app to analysis (app3 don't looks good)
+    c2 = re.findall('Appliance[1,2,4-9]', ''.join(data0.columns))
+    tic = time() 
     with tqdm(total = TOTAL_LINE, leave = False, ascii = True, 
             bar_format = "counting...{l_bar}{bar}|{n_fmt}/{total_fmt}|") as pybar:
     # for k in tqdm(data0.loc[:, c2].iterrows()):
-        for k in data0.loc[:, c2].iterrows():
+        for k in data0.loc[0:500000, c2].iterrows():
             # combinate new row as a key of a dict
             nw = ''.join(k[1].astype('int8').astype('str'))
+            # True --> 1 --> '1'
+
             if isnan(val0[nw]):
                 val0[nw] = 1
             elif val0[nw] > 0:
@@ -192,7 +226,14 @@ def data_read(filepath = "", ):
             else:
                 Warning(({'nw':nw, 'Val0':val0[nw]}, 'not mentioned'))
             pybar.update(1)
+
+    # caculating time cost
+    toc = time()
+    print('finish counting in ' + beauty_time(toc-tic))
     [print(k) for k in val0.items()]
+
+
+    return 0
 
 
 if __name__ == "__main__":
