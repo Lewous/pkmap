@@ -124,6 +124,7 @@ def beauty_time(time):
     h = 0
     m = 0
     s = 0
+    ms = 0
     str_time = ""
     if time > 3600 * 24:
         (d, time) = divmod(time, 3600*24)
@@ -134,7 +135,8 @@ def beauty_time(time):
     if time > 60:
         (m, time) = divmod(time, 60)
         str_time += f"{int(m)}m "
-    str_time += f"{int(time)}s"
+    (s, ms) = divmod(time*1000, 1000)
+    str_time += f"{int(s)}s {int(ms)}ms"
 
     return str_time
 
