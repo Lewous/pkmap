@@ -55,7 +55,7 @@ def do2(x):
     for k in range(x[0], x[1]):
         val = do1(k, val)
     
-    # return val
+    return val
     
 def do3(val, rag):
     
@@ -70,11 +70,10 @@ def do3(val, rag):
     # return val
 
 if __name__ == "__main__":
-    qu = Queue()
 
     tic = time()
-    TOTAL_LINE = 50000000
-    x1 = linspace(0, TOTAL_LINE, num = 15, dtype = 'int')
+    TOTAL_LINE = 5000000
+    x1 = linspace(0, TOTAL_LINE, num = 17, dtype = 'int')
     x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
     print(x1)
     
@@ -84,12 +83,11 @@ if __name__ == "__main__":
         result = pool.map(do2, x2)
         pool.close()
         pool.join()
-    print(val.items())
 
     toc = time()
     print(bt(toc-tic))
 
-    # val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
-    # print(val.items())
+    val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    print(val.items())
 
 
