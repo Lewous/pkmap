@@ -4,6 +4,7 @@
 
 # from ekmapTK import line_count as lc
 # from ekmapTK import filter
+from pandas.core.internals import managers
 from ekmapTK import TOTAL_LINE, data_read as dr
 from ekmapTK import beauty_time as bt
 
@@ -13,7 +14,7 @@ from numpy import int8
 from numpy import linspace
 
 from time import time
-from multiprocessing import Pool
+from multiprocessing import Pool, Process, Manager
 from multiprocessing import Queue
 from tqdm import tqdm
 
@@ -49,32 +50,55 @@ def do1(x, val):
 
     return val
 
-def do2(x):
-    val = {}
+def do2(val, x):
+
     for k in range(x[0], x[1]):
-        val = do1(k, val)
+        do1(k, val)
     
-    return val
+    # return val
     
+def do3(val, rag):
+    
+    for k in rag:
+        k = k+515000000
+        y = int8(k)
+        if y in val.keys():
+            val[y] += 1
+        else:
+            val[y] = 1
+        # pybar.update(1)
+    # return val
 
 if __name__ == "__main__":
     qu = Queue()
 
     tic = time()
-    TOTAL_LINE = 5000000
-    x1 = linspace(0, TOTAL_LINE, num = 20, dtype = 'int')
+    TOTAL_LINE = 50000
+    x1 = linspace(0, TOTAL_LINE, num = 6, dtype = 'int')
     x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
-    # x2 is a generator
-
+    print(x1)
     pool = Pool()
-    
-    result = pool.map(do1, x2)
-    pool.close()
-    pool.join()
+    # x2 is a generator
+    # with tqdm(total = TOTAL_LINE, leave = False, ascii = True, 
+    #         bar_format = "counting...{l_bar}{bar}|{n_fmt}/{total_fmt}|") as pybar:
+    with Manager() as manager:
+        val = manager.dict()
+        for k in x2:
+            # p = Process(target=do2, args=(val,(k[0], k[1])))
+            # p.start()
+            # p.join()
+            pool.apply_async(func=do2, args=(val,(k[0], k[1])))
+            # pool = Pool()
+            # qu.put(pybar)
+            # result = pool.map(do2, x2)
+        pool.close()
+        pool.join()
+        print(val.items())
 
-    linspace()
     toc = time()
     print(bt(toc-tic))
-    print(val.items())
-    print(f'{result[0]=}')
+
+    # val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    # print(val.items())
+
 
