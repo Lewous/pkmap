@@ -240,7 +240,7 @@ def data_read(filepath = "", PN = 16):
     # c2 is a list of string 
     tic = time()
     # PN = 16     # number of process
-    x1 = linspace(0, TOTAL_LINE/100, num = PN + 1, dtype = 'int')
+    x1 = linspace(0, TOTAL_LINE/20, num = PN + 1, dtype = 'int')
     x2 = ((x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator
     print(x1)
@@ -269,11 +269,11 @@ def data_read(filepath = "", PN = 16):
 
 
 if __name__ == "__main__":
-    f = 'REFIT/CLEAN_House1.csv'
+    fn = 'REFIT/CLEAN_House1.csv'
     with open('aa.txt', 'w') as f:
         f.write('PN \t width \t costs\n')
         for k in range(16):
-            data2 = data_read(f, PN = k+1)
+            data2 = data_read(fn, PN = k+1)
             print(data2)
             f.write(str(data2[0]) + '\t' + str(data2[1]) + '\t' + data2[2])
 
