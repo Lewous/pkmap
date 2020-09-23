@@ -1,6 +1,7 @@
  # -*- coding: utf-8 -*- 
 # ekmapTK.py
-# ekmapTK using pandas
+# ekmapTK using pandas.DataFrame 
+#   with the help of multiprocess
 # keep original ekmapTK as ekmapTK0
 
 # from pandas.core.indexes.datetimes import date_range
@@ -148,9 +149,9 @@ def beauty_time(time):
     return str_time
 
 def do2(arg2):
-    x2, val, data0, c2 = arg2
+    val, data1 = arg2
     # print(x2)
-    for k in data0.loc[x2[0]:x2[1]-1, c2].iterrows():
+    for k in data1.iterrows():
         # combinate new row as a key of a dict
         nw = ''.join(k[1].astype('int8').astype('str'))
 
@@ -246,20 +247,20 @@ def data_read(filepath = ""):
     # c2 is a list of string 
     tic = time()
     PN = 8     # number of process
-    x1 = linspace(0, TOTAL_LINE, num = PN + 1, dtype = 'int')
+    x1 = linspace(0, TOTAL_LINE/100, num = PN + 1, dtype = 'int')
     # x1 is a list of 
-    x2 = ((x1[k], x1[k+1]) for k in range(PN))
+    x2 = (range(x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator of each scope in a tuple of two int
     print(x1)
     result = list(range(PN))
     with tqdm(leave = False, bar_format = "Counting ...") as pybar:
     # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True, 
     #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
-        with Pool(16) as pool:
+        with Pool() as pool:
             # for k in range(PN):
             #     x = next(x2)
             #     print(x)
-            result = pool.map(do2,  ((k, val0.copy(), data0.copy(), c2.copy()) for k in x2) )
+            result = pool.map(do2,  ((val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) for k in x2) )
             pool.close()
             pool.join()
 
@@ -285,7 +286,7 @@ def data_read(filepath = ""):
 if __name__ == "__main__":
     fdir = 'REFIT/CLEAN_House1.csv'
     data2 = data_read(fdir)
-    with open('dta2', 'w') as f:
+    with open('data2', 'w') as f:
         for k in data2.items():
             f.write(str(k) + '\n')
         
