@@ -6,6 +6,7 @@
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
 from unittest import result
+from numpy import sum
 from numpy import fabs
 from numpy import log
 from numpy import nan, isnan
@@ -152,14 +153,19 @@ def do2(arg2):
     for k in data0.loc[x2[0]:x2[1]-1, c2].iterrows():
         # combinate new row as a key of a dict
         nw = ''.join(k[1].astype('int8').astype('str'))
+
+        # for nan default
         if isnan(val[nw]):
             val[nw] = 1
         else:
             val[nw] += 1
+
+        # for 0 default
+        # val[nw] += 1
     
     return val
 
-def data_read(filepath = "", PN = 16):
+def data_read(filepath = ""):
     """
     ready data to plot
 
@@ -193,7 +199,7 @@ def data_read(filepath = "", PN = 16):
         # appliance quantity
         appQ = len(data0.columns) - 4
         print("find `" + str(appQ) + "' appliance with `" + 
-                str(TOTAL_LINE) + "' lines")
+                str(TOTAL_LINE) + "' lines data")
 
     # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) 
     #     for k in range(appQ)}) 
@@ -239,13 +245,14 @@ def data_read(filepath = "", PN = 16):
     c2 = re.findall('Appliance[1,2,4-9]', ''.join(data0.columns))
     # c2 is a list of string 
     tic = time()
-    # PN = 16     # number of process
+    PN = 8     # number of process
     x1 = linspace(0, TOTAL_LINE/20, num = PN + 1, dtype = 'int')
+    # x1 is a list of 
     x2 = ((x1[k], x1[k+1]) for k in range(PN))
-    # x2 is a generator
-    print(x1)
+    # x2 is a generator of each scope in a tuple of two int
+    # print(x1)
     result = list(range(PN))
-    with tqdm(leave = False, bar_format = "Pooling ...") as pybar:
+    with tqdm(leave = False, bar_format = "Counting ...") as pybar:
     # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True, 
     #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
         with Pool(16) as pool:
@@ -259,23 +266,28 @@ def data_read(filepath = "", PN = 16):
     toc = time()
     print('finish counting in ' + beauty_time(toc-tic))
 
-    val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
-    # print(val.items())
+    data2 = val0.copy()
+    for k in result[0].keys():
+        x0 = (result[t][k] for t in range(len(result)))
+        # include np.nan
+        x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
+        data2[k] = x1
+    # data2 = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    # print(data2.items())
 
-    # [print(k) for k in val.items()]
+    # [print(k) for k in data2.items()]
+    print(f'{sum(list(data2.values()))=}')
+    # print(sum(data2.values()))
 
-
-    return PN, x1[1], beauty_time(toc-tic)
+    return data2
 
 
 if __name__ == "__main__":
-    fn = 'REFIT/CLEAN_House1.csv'
-    with open('aa.txt', 'w') as f:
-        f.write('PN \t width \t costs\n')
-        for k in range(16):
-            data2 = data_read(fn, PN = k+1)
-            print(data2)
-            f.write(str(data2[0]) + '\t' + str(data2[1]) + '\t' + data2[2])
-
+    fdir = 'REFIT/CLEAN_House1.csv'
+    data2 = data_read(fdir)
+    with open('dta2', 'w') as f:
+        for k in data2.items():
+            f.write(str(k) + '\n')
+        
     t = '='*6
     print(t + 'done' + t)
