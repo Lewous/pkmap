@@ -13,7 +13,7 @@ from numpy import log
 from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
-from numpy.lib.function_base import iterable
+from numpy import int8
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -151,9 +151,10 @@ def beauty_time(time):
 def do2(arg2):
     val, data1 = arg2
     # print(x2)
-    for k in data1.iterrows():
+    for k in data1.itertuples():
         # combinate new row as a key of a dict
-        nw = ''.join(k[1].astype('int8').astype('str'))
+        # nw = ''.join(k[1].astype('int8').astype('str'))
+        nw = ''.join([str(int(k)) for k in k[1:]])
 
         # for nan default
         if isnan(val[nw]):
@@ -247,7 +248,7 @@ def data_read(filepath = ""):
     # c2 is a list of string 
     tic = time()
     PN = 8     # number of process
-    x1 = linspace(0, TOTAL_LINE/100, num = PN + 1, dtype = 'int')
+    x1 = linspace(0, TOTAL_LINE/1, num = PN + 1, dtype = 'int')
     # x1 is a list of 
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator of each scope in a tuple of two int
