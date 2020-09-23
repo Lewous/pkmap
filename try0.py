@@ -8,10 +8,11 @@ from pandas.core.internals import managers
 from ekmapTK import TOTAL_LINE, data_read as dr
 from ekmapTK import beauty_time as bt
 
-from numpy import sqrt
+from numpy import power
 from numpy import pi
 from numpy import int8
 from numpy import linspace
+
 
 from time import time
 from multiprocessing import Pool, Process, Manager
@@ -72,22 +73,25 @@ def do3(val, rag):
 if __name__ == "__main__":
 
     tic = time()
-    TOTAL_LINE = 5000000
-    x1 = linspace(0, TOTAL_LINE, num = 17, dtype = 'int')
-    x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
-    print(x1)
+    # TOTAL_LINE = 5000000
+    # x1 = linspace(0, TOTAL_LINE, num = 17, dtype = 'int')
+    # x2 = ((x1[k], x1[k+1]) for k in range(len(x1)-1))
+    # print(x1)
     
-    # x2 is a generator
-    with tqdm(leave = False, bar_format = "Pooling ...") as pybar:
-        pool = Pool()
-        result = pool.map(do2, x2)
-        pool.close()
-        pool.join()
+    # # x2 is a generator
+    # with tqdm(leave = False, bar_format = "Pooling ...") as pybar:
+    #     pool = Pool()
+    #     result = pool.map(do2, x2)
+    #     pool.close()
+    #     pool.join()
 
+    for k in range(5000000):
+        # a = 2**10
+        a = pow(2, 10)
     toc = time()
     print(bt(toc-tic))
 
-    val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
-    print(val.items())
+    # val = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    # print(val.items())
 
 
