@@ -10,10 +10,10 @@
 from numpy import sum
 from numpy import fabs
 # from numpy import log
-# from numpy import nan, isnan
+from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
-# from numpy import int8
+from numpy import full
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -120,6 +120,20 @@ def GC(n):
         return tuple(['0'+k for k in a] + ['1'+k for k in a[::-1]])
 
 
+def KM(a, b):
+    """
+    generate Karnaugh map template
+    default value is np.nan for plotting benfits
+
+    a: an integer, number of variable in row
+    b: an integer, number of variable in col
+    return: a pd.DataFrame with GC(a) * GC(b)
+    """
+
+    # x = full([2**a, 2**b], nan)
+    return DataFrame(full([2**a, 2**b], nan), index=GC(a), columns=GC(b))
+
+
 def beauty_time(time):
     """
     beauty time string
@@ -148,7 +162,7 @@ def beauty_time(time):
 
     return str_time
 
-def do2(arg2):
+def do_count(arg2):
     val, data1 = arg2
     # print(x2)
     for k in data1.itertuples():
@@ -267,7 +281,7 @@ def data_read(filepath = ""):
             # for k in range(PN):
             #     x = next(x2)
             #     print(x)
-            result = pool.map(do2,  ((val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) for k in x2) )
+            result = pool.map(do_count,  ((val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) for k in x2) )
             pool.close()
             pool.join()
 
