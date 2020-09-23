@@ -209,10 +209,12 @@ def data_read(filepath = ""):
 
     # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) 
     #     for k in range(appQ)}) 
-    # data0.columns is: 
-    #   ['Time', 'Unix', 'Aggregate', 'Appliance1', 'Appliance2', 'Appliance3',
-    #    'Appliance4', 'Appliance5', 'Appliance6', 'Appliance7', 'Appliance8',
-    #    'Appliance9', 'Issues']
+    '''
+    data0.columns is: 
+      ['Time', 'Unix', 'Aggregate', 'Appliance1', 'Appliance2', 'Appliance3',
+       'Appliance4', 'Appliance5', 'Appliance6', 'Appliance7', 'Appliance8',
+       'Appliance9', 'Issues']
+    '''
 
     '''
     # filter here 
@@ -291,9 +293,9 @@ def data_read(filepath = ""):
 if __name__ == "__main__":
     fdir = 'REFIT/CLEAN_House1.csv'
     data2 = data_read(fdir)
-    with open('data2', 'w') as f:
-        for k in data2.items():
-            f.write(str(k) + '\n')
+    # with open('data2', 'w') as f:
+    #     for k in data2.items():
+    #         f.write(str(k) + '\n')
         
     t = '='*6
     print(t + 'The End' + t)
