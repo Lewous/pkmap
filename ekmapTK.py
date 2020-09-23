@@ -6,14 +6,14 @@
 
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
-from unittest import result
+
 from numpy import sum
 from numpy import fabs
-from numpy import log
-from numpy import nan, isnan
+# from numpy import log
+# from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
-from numpy import int8
+# from numpy import int8
 
 from pandas import DataFrame
 from pandas import read_csv
