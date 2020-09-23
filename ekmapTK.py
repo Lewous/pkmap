@@ -153,17 +153,21 @@ def do2(arg2):
     # print(x2)
     for k in data1.itertuples():
         # combinate new row as a key of a dict
+
+        # used in .iterrows()
         # nw = ''.join(k[1].astype('int8').astype('str'))
+        #used in .itertuples()
         nw = ''.join([str(int(k)) for k in k[1:]])
+        # nw = ''.join([str(k) for k in int8(k[1:])])
 
         # for nan default
-        if isnan(val[nw]):
-            val[nw] = 1
-        else:
-            val[nw] += 1
+        # if isnan(val[nw]):
+        #     val[nw] = 1
+        # else:
+        #     val[nw] += 1
 
         # for 0 default
-        # val[nw] += 1
+        val[nw] += 1
     
     return val
 
@@ -237,8 +241,8 @@ def data_read(filepath = ""):
     for k in GC(4):
         for j in GC(4):
             t = k + j   # is str like '11110001'
-            val0[t] = nan       # for plot benfits
-            # val0[t] = 0
+            # val0[t] = nan       # for plot benfits
+            val0[t] = 0
             # print(t+': ' + str(val0[t]))
     # print([k + ': ' + str(val0[k]) for k in val0.keys()])
     
@@ -269,12 +273,12 @@ def data_read(filepath = ""):
     print('finish counting in ' + beauty_time(toc-tic))
 
     data2 = val0.copy()
-    for k in result[0].keys():
-        x0 = (result[t][k] for t in range(len(result)))
-        # include np.nan
-        x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
-        data2[k] = x1
-    # data2 = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    # for k in result[0].keys():
+    #     x0 = (result[t][k] for t in range(len(result)))
+    #     # include np.nan
+    #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
+    #     data2[k] = x1
+    data2 = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
     # print(data2.items())
 
     # [print(k) for k in data2.items()]
@@ -292,4 +296,4 @@ if __name__ == "__main__":
             f.write(str(k) + '\n')
         
     t = '='*6
-    print(t + 'done' + t)
+    print(t + 'The End' + t)
