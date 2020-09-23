@@ -246,11 +246,11 @@ def data_read(filepath = ""):
     # c2 is a list of string 
     tic = time()
     PN = 8     # number of process
-    x1 = linspace(0, TOTAL_LINE/20, num = PN + 1, dtype = 'int')
+    x1 = linspace(0, TOTAL_LINE, num = PN + 1, dtype = 'int')
     # x1 is a list of 
     x2 = ((x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator of each scope in a tuple of two int
-    # print(x1)
+    print(x1)
     result = list(range(PN))
     with tqdm(leave = False, bar_format = "Counting ...") as pybar:
     # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True, 
