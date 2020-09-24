@@ -280,7 +280,7 @@ def data_read(filepath = ""):
     c2 = findall('Appliance[0-9]+', ''.join(data0.columns))
     # c2 is a list of string 
     tic = time()
-    PN = 10     # number of process
+    PN = 8     # number of process
     x1 = linspace(0, TOTAL_LINE/1, num = PN + 1, dtype = 'int')
     # x1 is a list of 
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
@@ -321,9 +321,10 @@ def data_read(filepath = ""):
 
 
 if __name__ == "__main__":
-    k = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
-    print(f'{k=}')
-    for file_name in k:
+    files = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
+    # files = ['CLEAN_House8']
+    print(f'{files=}')
+    for file_name in files:
 
         file_path = 'REFIT/' + file_name + '.csv'
         data2, appQ = data_read(file_path)
@@ -340,13 +341,15 @@ if __name__ == "__main__":
         xa = int(appQ / 2)
         xb = int(appQ - xa)
         ekmap = KM(xa, xb)
-        ek = log(data2['0' * appQ])
+        # ek = log(data2['0' * appQ])
+        # ek = log(max(data2.values()))
+        # ek = log(appQ)
 
         for _ind in ekmap.index:
             for _col in ekmap.columns:
                 d = data2[_ind + _col]
                 if d:   
-                    ekmap.loc[_ind, _col] = log(d)/ek
+                    ekmap.loc[_ind, _col] = log(d)
                 else:
                     pass
 
@@ -363,7 +366,8 @@ if __name__ == "__main__":
         # plt.title(f'{cmap=}')
         for fig_type in ('.png', '.pdf', '.tiff'):
             plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type)
-        plt.show()
+            pass
+        # plt.show()
 
     t = '='*6
     print(t + ' finished ' + t)
