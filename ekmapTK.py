@@ -9,7 +9,7 @@
 
 from numpy import sum
 from numpy import fabs
-# from numpy import log
+from numpy import log
 from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
@@ -22,6 +22,8 @@ from multiprocessing import Pool
 from time import time
 from tqdm import tqdm
 import re
+import matplotlib.pyplot as plt
+import seaborn as sn
 
 # from time import time
 
@@ -123,6 +125,7 @@ def GC(n):
 def KM(a, b):
     """
     generate Karnaugh map template
+    ====== template only ======
     default value is np.nan for plotting benfits
 
     a: an integer, number of variable in row
@@ -130,8 +133,8 @@ def KM(a, b):
     return: a pd.DataFrame with GC(a) * GC(b)
     """
 
-    # x = full([2**a, 2**b], nan)
-    return DataFrame(full([2**a, 2**b], nan), index=GC(a), columns=GC(b))
+    return DataFrame(full([2**a, 2**b], nan), 
+                    index=GC(a), columns=GC(b))
 
 
 def beauty_time(time):
@@ -267,7 +270,7 @@ def data_read(filepath = ""):
     c2 = re.findall('Appliance[1,2,4-9]', ''.join(data0.columns))
     # c2 is a list of string 
     tic = time()
-    PN = 8     # number of process
+    PN = 10     # number of process
     x1 = linspace(0, TOTAL_LINE/1, num = PN + 1, dtype = 'int')
     # x1 is a list of 
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
@@ -281,7 +284,9 @@ def data_read(filepath = ""):
             # for k in range(PN):
             #     x = next(x2)
             #     print(x)
-            result = pool.map(do_count,  ((val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) for k in x2) )
+            result = pool.map(do_count,  (
+                (val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) 
+                for k in x2) )
             pool.close()
             pool.join()
 
@@ -294,7 +299,8 @@ def data_read(filepath = ""):
     #     # include np.nan
     #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
     #     data2[k] = x1
-    data2 = {k: sum([result[t][k] for t in range(len(result))]) for k in result[0].keys()}
+    data2 = {k: sum([result[t][k] for t in range(len(result))]) 
+        for k in result[0].keys()}
     # print(data2.items())
 
     # [print(k) for k in data2.items()]
@@ -305,11 +311,28 @@ def data_read(filepath = ""):
 
 
 if __name__ == "__main__":
-    fdir = 'REFIT/CLEAN_House1.csv'
-    data2 = data_read(fdir)
+    # file path
+    file_path = 'REFIT/CLEAN_House1.csv'
+    data2 = data_read(file_path)
     # with open('data2', 'w') as f:
     #     for k in data2.items():
     #         f.write(str(k) + '\n')
-        
+    
+    # fill in data
+    ekmap = KM(4, 4)
+    ek = log(data2['00000000'])
+    for _ind in ekmap.index:
+        for _col in ekmap.columns:
+            d = data2[_ind + _col]
+            if d:
+                ekmap.loc[_ind, _col] = log(d)/ek
+    print(ekmap)
+
+    sn.set()
+    f, ax = plt.subplots(figsize = (9, 6))
+    sn.heatmap(ekmap, ax = ax)
+    plt.xlabel('Low 4 bits')
+    plt.ylabel('High 4 bits')
+    plt.show()
     t = '='*6
-    print(t + 'The End' + t)
+    print(t + ' finished ' + t)
