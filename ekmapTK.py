@@ -21,16 +21,17 @@ from multiprocessing import Pool
 
 from time import time
 from tqdm import tqdm
-import re
+# import re
+from re import findall
+from os import listdir
 import matplotlib.pyplot as plt
 import seaborn as sn
 
-# from time import time
 
 TOTAL_LINE = 6960002
 FILE_PATH = 'REFIT/CLEAN_House1.csv'
 val0 = {}
-data0 = DataFrame([])
+# data0 = DataFrame([])
 
 
 def line_count(filepath):
@@ -133,6 +134,9 @@ def KM(a, b):
     return: a pd.DataFrame with GC(a) * GC(b)
     """
 
+    a = int(fabs(a))
+    b = int(fabs(b))
+
     return DataFrame(full([2**a, 2**b], nan), 
                     index=GC(a), columns=GC(b))
 
@@ -165,6 +169,7 @@ def beauty_time(time):
 
     return str_time
 
+
 def do_count(arg2):
     val, data1 = arg2
     # print(x2)
@@ -188,6 +193,7 @@ def do_count(arg2):
     
     return val
 
+
 def data_read(filepath = ""):
     """
     ready data to plot
@@ -207,22 +213,24 @@ def data_read(filepath = ""):
 
     global TOTAL_LINE
     global FILE_PATH
-    global data0
+    # global data0
 
     if filepath == "":
         filepath = FILE_PATH
-    filename = filepath.split('/')[-1].split('.')[:-1][0]
+    file_name = findall('/(.+)\.', filepath)[0]
+    # filepath.split('/')[-1].split('.')[:-1][0]
 
-    if data0.empty:
-        with tqdm(leave = False, 
-                bar_format = "reading " + filename + " ...") as pybar:
-            data0 = read_csv(filepath)
+    # if data0.empty:
+    with tqdm(leave = False, 
+            bar_format = "reading " + file_name + " ...") as pybar:
+        data0 = read_csv(filepath)
 
-        TOTAL_LINE = len(data0.index)
-        # appliance quantity
-        appQ = len(data0.columns) - 4
-        print("find `" + str(appQ) + "' appliance with `" + 
-                str(TOTAL_LINE) + "' lines data")
+    TOTAL_LINE = len(data0.index)
+    # appliance total number
+    appQ = len(data0.columns) - 4
+    print("find `" + str(appQ) + "' appliance with `" + 
+            str(TOTAL_LINE) + "' lines data in " + file_name)
+
 
     # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) 
     #     for k in range(appQ)}) 
@@ -257,8 +265,10 @@ def data_read(filepath = ""):
     val0 is the template incase lose of keys()
     '''
     val0 = {}
-    for k in GC(4):
-        for j in GC(4):
+    xa = int(appQ / 2)
+    xb = int(appQ - xa)
+    for k in GC(xa):
+        for j in GC(xb):
             t = k + j   # is str like '11110001'
             # val0[t] = nan       # for plot benfits
             val0[t] = 0
@@ -267,7 +277,7 @@ def data_read(filepath = ""):
     
     # fill in statics
     # c2: choose 8 app to analysis (app3 don't looks good)
-    c2 = re.findall('Appliance[1,2,4-9]', ''.join(data0.columns))
+    c2 = findall('Appliance[0-9]+', ''.join(data0.columns))
     # c2 is a list of string 
     tic = time()
     PN = 10     # number of process
@@ -276,7 +286,7 @@ def data_read(filepath = ""):
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator of each scope in a tuple of two int
     print(x1)
-    result = list(range(PN))
+    # result = list(range(PN))
     with tqdm(leave = False, bar_format = "Counting ...") as pybar:
     # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True, 
     #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
@@ -304,35 +314,56 @@ def data_read(filepath = ""):
     # print(data2.items())
 
     # [print(k) for k in data2.items()]
-    print(f'{sum(list(data2.values()))=}')
+    print(f'{sum(list(data2.values()))=}' + '\n')
     # print(sum(data2.values()))
 
-    return data2
+    return data2, appQ
 
 
 if __name__ == "__main__":
-    # file path
-    file_path = 'REFIT/CLEAN_House1.csv'
-    data2 = data_read(file_path)
-    # with open('data2', 'w') as f:
-    #     for k in data2.items():
-    #         f.write(str(k) + '\n')
-    
-    # fill in data
-    ekmap = KM(4, 4)
-    ek = log(data2['00000000'])
-    for _ind in ekmap.index:
-        for _col in ekmap.columns:
-            d = data2[_ind + _col]
-            if d:
-                ekmap.loc[_ind, _col] = log(d)/ek
-    print(ekmap)
+    k = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
+    print(f'{k=}')
+    for file_name in k:
 
-    sn.set()
-    f, ax = plt.subplots(figsize = (9, 6))
-    sn.heatmap(ekmap, ax = ax)
-    plt.xlabel('Low 4 bits')
-    plt.ylabel('High 4 bits')
-    plt.show()
+        file_path = 'REFIT/' + file_name + '.csv'
+        data2, appQ = data_read(file_path)
+        # save data2
+        with open('REFIT/EKMap' + file_name[5:] + '.csv', 'w') as f:
+            for k in data2.items():
+                f.write(':'.join([k[0], str(k[1])]) + '\n')
+
+        # with open('REFIT/EKMap' + file_name[5:] + '.csv', 'r') as f:
+        #     data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
+        # appQ = len(tuple(data2.keys())[0])
+
+        # fill in data
+        xa = int(appQ / 2)
+        xb = int(appQ - xa)
+        ekmap = KM(xa, xb)
+        ek = log(data2['0' * appQ])
+
+        for _ind in ekmap.index:
+            for _col in ekmap.columns:
+                d = data2[_ind + _col]
+                if d:   
+                    ekmap.loc[_ind, _col] = log(d)/ek
+                else:
+                    pass
+
+        # print(ekmap)
+
+        sn.set()
+        fig, ax = plt.subplots(figsize = (15, 8))
+        cmap = 'inferno'
+        sn.heatmap(ekmap, cbar = False, cmap = cmap)
+        plt.ylabel('High ' + str(xa) + ' bits', size = 18)
+        plt.xlabel('Low ' + str(xb) + ' bits', size = 18)
+        plt.yticks(rotation='horizontal')
+        plt.xticks(rotation=45)
+        # plt.title(f'{cmap=}')
+        for fig_type in ('.png', '.pdf', '.tiff'):
+            plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type)
+        plt.show()
+
     t = '='*6
     print(t + ' finished ' + t)
