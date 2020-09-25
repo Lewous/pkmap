@@ -326,16 +326,16 @@ if __name__ == "__main__":
     print(f'{files=}')
     for file_name in files:
 
-        file_path = 'REFIT/' + file_name + '.csv'
-        data2, appQ = data_read(file_path)
-        # save data2
-        with open('REFIT/EKMap' + file_name[5:] + '.csv', 'w') as f:
-            for k in data2.items():
-                f.write(':'.join([k[0], str(k[1])]) + '\n')
+        # file_path = 'REFIT/' + file_name + '.csv'
+        # data2, appQ = data_read(file_path)
+        # # save data2
+        # with open('REFIT/EKMap' + file_name[5:] + '.csv', 'w') as f:
+        #     for k in data2.items():
+        #         f.write(':'.join([k[0], str(k[1])]) + '\n')
 
-        # with open('REFIT/EKMap' + file_name[5:] + '.csv', 'r') as f:
-        #     data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
-        # appQ = len(tuple(data2.keys())[0])
+        with open('REFIT/EKMap' + file_name[5:] + '.csv', 'r') as f:
+            data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
+        appQ = len(tuple(data2.keys())[0])
 
         # fill in data
         xa = int(appQ / 2)
@@ -364,8 +364,9 @@ if __name__ == "__main__":
         plt.yticks(rotation='horizontal')
         plt.xticks(rotation=45)
         # plt.title(f'{cmap=}')
-        for fig_type in ('.png', '.pdf', '.tiff'):
-            plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type)
+        # for fig_type in ('.png', '.pdf', '.tiff'):
+        for fig_type in ('.eps', ):
+            plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type, bbox_inches='tight')
             pass
         # plt.show()
 
