@@ -34,11 +34,11 @@ val0 = {}
 # data0 = DataFrame([])
 
 
-def line_count(filepath):
+def line_count(file_path):
     """
     to count the total lines in a file to read
 
-    filepath: a string, used as open(filepath,'rb')
+    file_path: a string, used as open(file_path,'rb')
     return: a integer if success
     TOTAL_LINE: global variant in EKMApTK
 
@@ -48,8 +48,8 @@ def line_count(filepath):
 
     # global TOTAL_LINE
     global FILE_PATH
-    FILE_PATH = filepath
-    with open(filepath,'rb') as f:
+    FILE_PATH = file_path
+    with open(file_path,'rb') as f:
         count = 0
         while True:
             data = f.read(0x400000)
@@ -194,11 +194,11 @@ def do_count(arg2):
     return val
 
 
-def data_read(filepath = ""):
+def read_REFIT(file_path = "", save_file = True):
     """
     ready data to plot
 
-    filepath: a string, used as open(filepath,'rb')
+    file_path: a string, used as open(file_path,'rb')
     return: a dict with keys: unix, agg, app1, app2, ...
     # TOTAL_LINE: global variant in EKMApTK
 
@@ -215,15 +215,16 @@ def data_read(filepath = ""):
     global FILE_PATH
     # global data0
 
-    if filepath == "":
-        filepath = FILE_PATH
-    file_name = findall('/(.+)\.', filepath)[0]
-    # filepath.split('/')[-1].split('.')[:-1][0]
+    if file_path == "":
+        file_path = FILE_PATH
+    file_name = findall('/(.+)\.', file_path)[0]
+    file_dir = '/'.join(file_path.split('/')[:-1])
+    # file_path.split('/')[-1].split('.')[:-1][0]
 
     # if data0.empty:
     with tqdm(leave = False, 
             bar_format = "reading " + file_name + " ...") as pybar:
-        data0 = read_csv(filepath)
+        data0 = read_csv(file_path)
 
     TOTAL_LINE = len(data0.index)
     # appliance total number
@@ -317,6 +318,23 @@ def data_read(filepath = ""):
     print(f'{sum(list(data2.values()))=}' + '\n')
     # print(sum(data2.values()))
 
+    # save data2
+    if save_file:
+        with open(file_dir + '/EKMap' + file_name[5:] + '.csv', 'w') as f:
+            for k in data2.items():
+                f.write(';'.join([k[0], str(k[1])]) + '\n')
+
+    return data2, appQ
+
+
+def read_EKfile(file_path):
+    """
+    loading data from my format
+    """
+    with open(file_path, 'r') as f:
+        data2 = {k.split(';')[0]:int(k.split(';')[1]) for k in f}
+    appQ = len(tuple(data2.keys())[0])
+
     return data2, appQ
 
 
@@ -324,18 +342,15 @@ if __name__ == "__main__":
     files = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
     # files = ['CLEAN_House8']
     print(f'{files=}')
+
     for file_name in files:
 
         # file_path = 'REFIT/' + file_name + '.csv'
-        # data2, appQ = data_read(file_path)
-        # # save data2
-        # with open('REFIT/EKMap' + file_name[5:] + '.csv', 'w') as f:
-        #     for k in data2.items():
-        #         f.write(':'.join([k[0], str(k[1])]) + '\n')
+        # data2, appQ = read_REFIT(file_path)
 
-        with open('REFIT/EKMap' + file_name[5:] + '.csv', 'r') as f:
-            data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
-        appQ = len(tuple(data2.keys())[0])
+        file_path = 'REFIT/EKMap' + file_name[5:] + '.csv'
+        data2, appQ = read_EKfile(file_path)
+
 
         # fill in data
         xa = int(appQ / 2)
