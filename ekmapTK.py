@@ -7,7 +7,6 @@
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
 
-from matplotlib.pyplot import title
 from numpy import sum
 from numpy import fabs
 from numpy import log
@@ -26,8 +25,9 @@ from tqdm import tqdm
 from re import findall
 from os import listdir
 import matplotlib.pyplot as plt
+import matplotlib.patches as pat
 import seaborn as sn
-
+from copy import copy
 
 TOTAL_LINE = 6960002
 FILE_PATH = 'REFIT/CLEAN_House1.csv'
@@ -373,7 +373,7 @@ def read_EKfile(file_path):
 
 
 def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True, 
-            title = ""):
+            title = "", pats = []):
     """
     do plot, save EKMap figs 
 
@@ -382,7 +382,7 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     cmap: 
     fig_type: an enumerable object, tuple here
     do_show: run `plt.show()' or not 
-        (have some issue here, fix later since is harmless)
+        (fig still showed, fix later since is harmless)
     title: a string, the fig title 
 
     return: no return
@@ -415,9 +415,9 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
 
     # print(ekmap)
     sn.set()
-    fig, ax = plt.subplots(figsize = (15, 8))
+    plt.figure(figsize = (15, 8))
     # cmap = 'inferno'
-    sn.heatmap(ekmap, ax=ax, cbar = False, cmap = cmap)
+    ax = sn.heatmap(ekmap, cbar = False, cmap = cmap)
     plt.ylabel('High ' + str(xa) + ' bits', size = 18)
     plt.xlabel('Low ' + str(xb) + ' bits', size = 18)
     plt.yticks(rotation='horizontal')
@@ -428,8 +428,13 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
         # see in https://stackoverflow.com/questions/42406233/
         pass
 
-    # plt.title(f'{cmap=}')
-    # for fig_type in ('.png', '.pdf', '.tiff'):
+    if pats:
+        # pats is not empty
+        for k in pats:
+            newk = copy(k)
+            ax.add_patch(newk)
+            # see in https://stackoverflow.com/questions/47554753
+
     for fig_type in fig_type:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
@@ -437,6 +442,8 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
 
     if do_show:
         plt.show()
+    
+    return 0
 
 
 if __name__ == "__main__":
