@@ -194,12 +194,24 @@ def do_count(arg2):
     return val
 
 
-def read_REFIT(file_path = "", save_file = True):
+def read_REFIT(file_path = "", save_file = False, slice = None):
     """
     ready data to plot
 
     file_path: a string, used as open(file_path,'rb')
-    return: a dict with keys: unix, agg, app1, app2, ...
+    save_file: save EKMap data or not
+    slice: slice or not
+        is None: no slice
+        is integer: slice dataset into `slice' piece
+        == this will affect the process number `PN' of multiprocess
+    
+    return: 
+        data2: a dict of EKMap:
+            '01010000': 35,     # counting consequence
+            '01011000': 0,      # not appear
+            ......
+        appQ: number of total appliance
+
     # TOTAL_LINE: global variant in EKMApTK
 
     0. count total lines
@@ -281,7 +293,15 @@ def read_REFIT(file_path = "", save_file = True):
     c2 = findall('Appliance[0-9]+', ''.join(data0.columns))
     # c2 is a list of string 
     tic = time()
-    PN = 8     # number of process
+    # PN means number of process
+    if slice:
+        # if `slice' is integer, do slice, offer PN as `slice'
+        PN = slice
+        pass
+    else:
+        # if `slice` is None, no slice, offer PN as 8
+        PN = 8
+
     x1 = linspace(0, TOTAL_LINE/1, num = PN + 1, dtype = 'int')
     # x1 is a list of 
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
@@ -304,14 +324,23 @@ def read_REFIT(file_path = "", save_file = True):
     toc = time()
     print('finish counting in ' + beauty_time(toc-tic))
 
-    data2 = val0.copy()
-    # for k in result[0].keys():
-    #     x0 = (result[t][k] for t in range(len(result)))
-    #     # include np.nan
-    #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
-    #     data2[k] = x1
-    data2 = {k: sum([result[t][k] for t in range(len(result))]) 
-        for k in result[0].keys()}
+    if slice:
+        # `slice' is integer, will do slice
+        # data2 is a dict of dict with `slice' items
+        data2 = result.copy()
+        pass
+        
+        
+    else:
+        # `slice' is None, no slice
+        data2 = val0.copy()
+        # for k in result[0].keys():
+        #     x0 = (result[t][k] for t in range(len(result)))
+        #     # include np.nan
+        #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
+        #     data2[k] = x1
+        data2 = {k: sum([result[t][k] for t in range(len(result))]) 
+            for k in result[0].keys()}
     # print(data2.items())
 
     # [print(k) for k in data2.items()]
