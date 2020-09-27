@@ -7,6 +7,7 @@
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
 
+from matplotlib.pyplot import title
 from numpy import sum
 from numpy import fabs
 from numpy import log
@@ -32,6 +33,7 @@ TOTAL_LINE = 6960002
 FILE_PATH = 'REFIT/CLEAN_House1.csv'
 val0 = {}
 # data0 = DataFrame([])
+file_name = 'Housex'
 
 
 def line_count(file_path):
@@ -225,6 +227,7 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
 
     global TOTAL_LINE
     global FILE_PATH
+    global file_name
     # global data0
 
     if file_path == "":
@@ -326,8 +329,10 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
 
     if slice:
         # `slice' is integer, will do slice
-        # data2 is a dict of dict with `slice' items
+        # data2 is a list of dict with `slice' items
         data2 = result.copy()
+
+        print(f'{sum([sum(list(data2[k].values())) for k in range(slice)])=}' + '\n')
         pass
         
         
@@ -341,17 +346,17 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
         #     data2[k] = x1
         data2 = {k: sum([result[t][k] for t in range(len(result))]) 
             for k in result[0].keys()}
-    # print(data2.items())
+        # print(data2.items())
 
-    # [print(k) for k in data2.items()]
-    print(f'{sum(list(data2.values()))=}' + '\n')
-    # print(sum(data2.values()))
+        # [print(k) for k in data2.items()]
+        print(f'{sum(list(data2.values()))=}' + '\n')
+        # print(sum(data2.values()))
 
     # save data2
     if save_file:
         with open(file_dir + '/EKMap' + file_name[5:] + '.csv', 'w') as f:
             for k in data2.items():
-                f.write(';'.join([k[0], str(k[1])]) + '\n')
+                f.write(':'.join([k[0], str(k[1])]) + '\n')
 
     return data2, appQ
 
@@ -361,10 +366,77 @@ def read_EKfile(file_path):
     loading data from my format
     """
     with open(file_path, 'r') as f:
-        data2 = {k.split(';')[0]:int(k.split(';')[1]) for k in f}
+        data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
     appQ = len(tuple(data2.keys())[0])
 
     return data2, appQ
+
+
+def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True, 
+            title = ""):
+    """
+    do plot, save EKMap figs 
+
+    data2: a dict of EKMap
+    appQ: integer, the number of appliance
+    cmap: 
+    fig_type: an enumerable object, tuple here
+    do_show: run `plt.show()' or not 
+        (have some issue here, fix later since is harmless)
+    title: a string, the fig title 
+
+    return: no return
+
+    ====== WARNING ======
+    plt.savefig() may occur `FileNotFoundError: [Errno 2]'
+    when blending use of slashes and backslashes
+    see in https://stackoverflow.com/questions/16333569
+    """
+
+    global file_name
+    # fill in data
+    xa = int(appQ / 2)
+    xb = int(appQ - xa)
+    ekmap = KM(xa, xb)
+    # ek = log(data2['0' * appQ])
+    # ek = log(max(data2.values()))
+    # ek = log(appQ)
+    ek = 1
+
+    for _ind in ekmap.index:
+        for _col in ekmap.columns:
+            d = data2[_ind + _col]
+            if d:
+                # d > 0                
+                ekmap.loc[_ind, _col] = log(d)/ek
+            else:
+                # d == 0
+                pass
+
+    # print(ekmap)
+    sn.set()
+    fig, ax = plt.subplots(figsize = (15, 8))
+    # cmap = 'inferno'
+    sn.heatmap(ekmap, ax=ax, cbar = False, cmap = cmap)
+    plt.ylabel('High ' + str(xa) + ' bits', size = 18)
+    plt.xlabel('Low ' + str(xb) + ' bits', size = 18)
+    plt.yticks(rotation='horizontal')
+    plt.xticks(rotation=45)
+    if title:
+        # `title' has been specified
+        ax.set_title(title, size = 24)
+        # see in https://stackoverflow.com/questions/42406233/
+        pass
+
+    # plt.title(f'{cmap=}')
+    # for fig_type in ('.png', '.pdf', '.tiff'):
+    for fig_type in fig_type:
+        plt.pause(1e-13)
+        # see in https://stackoverflow.com/questions/62084819/
+        plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type, bbox_inches='tight')
+
+    if do_show:
+        plt.show()
 
 
 if __name__ == "__main__":
