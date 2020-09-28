@@ -7,6 +7,7 @@
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
 
+import re
 from numpy import sum
 from numpy import fabs
 from numpy import log
@@ -14,9 +15,11 @@ from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
 from numpy import full
+from numpy.core.numeric import outer
 
 from pandas import DataFrame
 from pandas import read_csv
+from pandas import concat
 from multiprocessing import Pool
 
 from time import time
@@ -28,11 +31,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 import seaborn as sn
 from copy import copy
+import os
 
 TOTAL_LINE = 6960002
 FILE_PATH = 'REFIT/CLEAN_House1.csv'
 val0 = {}
-# data0 = DataFrame([])
+data0 = DataFrame([])
 file_name = 'Housex'
 
 
@@ -431,8 +435,8 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     if pats:
         # pats is not empty
         for k in pats:
-            newk = copy(k)
-            ax.add_patch(newk)
+            # newk = copy(k)
+            ax.add_patch(copy(k))
             # see in https://stackoverflow.com/questions/47554753
 
     for fig_type in fig_type:
@@ -445,6 +449,73 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     
     return 0
 
+def slice_REFIT(file_path, n_slice, n_valid, n_test, n_app, save_dir=''):
+    """
+    slice dataset into `n_slice' pieces
+    and save for Mingjun Zhong's code
+
+    file_path: 
+    n_slice: integer, number to slice, 10 for house7
+    n_valid: integer, number of slice for validation
+    n_test: integer, number of slice for testing
+    n_app: integer, number of appliance for analysising
+
+    """
+    global data0
+    file_name = findall('/(.+)\.', file_path)[0]
+    file_dir = '/'.join(file_path.split('/')[:-1])
+    # file_path.split('/')[-1].split('.')[:-1][0]
+    
+    if data0.empty:
+        # reuse `data0' when slicing multiple times
+        with tqdm(leave = False, 
+                bar_format = "reading " + file_name + " ...") as pybar:
+            data0 = read_csv(file_path)
+
+    app = 'Appliance'+str(n_app)    # such as 'Appliance3'
+    name_app = 'freezer'
+    if not save_dir:
+        save_dir = './' + name_app + '/'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    mean_agg = data0['Aggregate'].mean()
+    std_agg = data0['Aggregate'].std()
+    datax = data0[app]
+    mean_app = datax[datax>5].mean()
+    std_app = datax[datax>5].std()
+    TOTAL_LINE = len(data0.index)
+    print(f'{TOTAL_LINE=}')
+    print(f'{(mean_agg, std_agg)=}')
+    print(f'{(mean_app, std_app)=}')
+    
+    x1 = linspace(0, TOTAL_LINE, num = n_slice + 1, dtype = 'int')
+    # x1 is a list
+    print(f'{x1=}')
+    x2 = ((x1[k], x1[k+1]) for k in range(n_slice))
+    for ind, k in enumerate(x2):
+        ind += 1
+        print(f'{(ind, k)=}')
+        datax = data0.loc[k[0]:k[1], ['Aggregate', app]]
+        data_agg = (datax['Aggregate'] - mean_agg) / std_agg
+        data_app = (datax[app] - mean_app) / std_app
+        data2save = concat([data_agg, data_app], axis = 1) 
+        if ind == n_test:
+            # is test set
+            data2save.to_csv(save_dir + name_app + '_test_' + 'S' + str(n_test)
+                            + '.csv', index=False)
+            print('\tslice ' + str(ind) + ' for testing')
+        elif ind == n_valid:
+            # is validation set
+            data2save.to_csv(save_dir + name_app + '_valid_' + 'S' + str(n_valid)
+                            + '.csv', index=False)
+            print('\tslice ' + str(ind) + ' for validation')
+        else:
+            # is training set
+            data2save.to_csv(save_dir + name_app + '_train_' 
+                            + '.csv', index=False, mode = 'a', header=False)
+
+    return None
 
 if __name__ == "__main__":
     files = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
