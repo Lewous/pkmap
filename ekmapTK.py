@@ -324,7 +324,7 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
             #     print(x)
             result = pool.map(do_count,  (
                 (val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) 
-                for k in x2) )
+                for k in x2 ))
             pool.close()
             pool.join()
 
@@ -449,7 +449,7 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     
     return 0
 
-def slice_REFIT(file_path, n_slice, n_valid, n_test, n_app, save_dir=''):
+def slice_REFIT(args):
     """
     slice dataset into `n_slice' pieces
     and save for Mingjun Zhong's code
@@ -462,6 +462,7 @@ def slice_REFIT(file_path, n_slice, n_valid, n_test, n_app, save_dir=''):
 
     """
     global data0
+    file_path, n_slice, n_valid, n_test, n_app, save_dir = args
     file_name = findall('/(.+)\.', file_path)[0]
     file_dir = '/'.join(file_path.split('/')[:-1])
     # file_path.split('/')[-1].split('.')[:-1][0]
@@ -512,7 +513,7 @@ def slice_REFIT(file_path, n_slice, n_valid, n_test, n_app, save_dir=''):
             print('\tslice ' + str(ind) + ' for validation')
         else:
             # is training set
-            data2save.to_csv(save_dir + name_app + '_train_' 
+            data2save.to_csv(save_dir + name_app + '_training_' 
                             + '.csv', index=False, mode = 'a', header=False)
 
     return None

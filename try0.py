@@ -17,7 +17,7 @@ from ekmapTK import do_plot
 # import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 # from time import time
-# from multiprocessing import Pool, Process, Manager
+from multiprocessing import Pool
 # from multiprocessing import Queue
 # from tqdm import tqdm
 
@@ -54,22 +54,22 @@ def do1(house_number, slice):
     return None
 
 
-def do2(house_number, slice):
+def do2(house_number, slice, n_app):
     """
     generate data fits Mingjun Zhong's code
     """
 
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
 
-    for ind in range(int(slice/2)):
-    # for ind in (0, ):
-        n_t = ind + 1
-        n_v = ind + 2
-        slice_REFIT(file_path=file_path, n_slice=slice, 
-                    n_valid=n_v, n_test=n_t, n_app=3, 
-                    save_dir = './ex' + str(ind) + '/freezer/', )
-        print('-'*20)
-        pass
+    with Pool() as pool:
+        pool.map(slice_REFIT,  ((file_path, slice, ind+2, ind+1, 
+                n_app, './exm' + str(ind) + '/freezer/', ) 
+                for ind in range(slice-4) ))
+        pool.close()
+        pool.join()
+    
+    print('-'*20)
+    pass
 
     return None
 
@@ -78,6 +78,7 @@ if __name__ == "__main__":
 
     house_number = 7
     slice = 10
+    n_app = 3
 
-    do2(house_number, slice)
+    do2(house_number, slice, n_app)
 
