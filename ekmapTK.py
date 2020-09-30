@@ -480,11 +480,15 @@ def slice_REFIT(args):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    mean_agg = data0['Aggregate'].mean()
-    std_agg = data0['Aggregate'].std()
-    datax = data0[app]
-    mean_app = datax[datax>5].mean()
-    std_app = datax[datax>5].std()
+    # mean_agg = data0['Aggregate'].mean()
+    # std_agg = data0['Aggregate'].std()
+    mean_agg = 566
+    std_agg = 843
+    # datax = data0[app]
+    # mean_app = datax[(datax>5) & (datax < 800)].mean()
+    # std_app = datax[(datax>5) & (datax < 800)].std()
+    mean_app = 50
+    std_app = 13
     TOTAL_LINE = len(data0.index)
     print(f'{TOTAL_LINE=}')
     print(f'{(mean_agg, std_agg)=}')
