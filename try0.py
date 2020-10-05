@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 # test and vertify file
 
@@ -21,6 +21,7 @@ from multiprocessing import Pool
 # from multiprocessing import Queue
 # from tqdm import tqdm
 
+
 def do1(house_number, slice):
     """
     generate EKMap slices with rectangle highlight
@@ -33,22 +34,21 @@ def do1(house_number, slice):
 
     highL = []  # rectangle to high light
     for wid, x in zip((2, 4, 4, 4, 2), (0, 6, 14, 22, 30)):
-        # highL.append(pat.Rectangle((x, 2), wid, 4, 
+        # highL.append(pat.Rectangle((x, 2), wid, 4,
         #                         fill=False, edgecolor='c', lw=6))
-        # highL.append(pat.Rectangle((x, 10), wid, 4, 
+        # highL.append(pat.Rectangle((x, 10), wid, 4,
         #                         fill=False, edgecolor='c', lw=6))
-        highL.append(pat.Rectangle((x, 0), wid, 16, 
-                                fill=False, edgecolor='c', lw=6))
+        highL.append(pat.Rectangle((x, 0), wid, 16,
+                                   fill=False, edgecolor='c', lw=6))
         pass
-    do_plot(data2, appQ, do_show=True, pats=highL, 
+    do_plot(data2, appQ, do_show=True, pats=highL,
             title='1in1_app8 is on')
-
 
     k = 0
     for data3 in data2:
         k += 1
         titl = str(k) + r'in' + str(slice) + '_app3 is on and app8 is off'
-        do_plot(data3, appQ, title = titl, do_show=True, pats=highL.copy(), 
+        do_plot(data3, appQ, title=titl, do_show=True, pats=highL.copy(),
                 fig_type=(r'_' + titl+'.png', r'_' + titl + '.eps', ), )
 
     return None
@@ -62,12 +62,12 @@ def do2(house_number, slice, n_app):
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
 
     with Pool() as pool:
-        pool.map(slice_REFIT,  ((file_path, slice, ind+2, ind+1, 
-                n_app, './exm' + str(ind) + '/freezer/', ) 
-                for ind in range(slice-4) ))
+        pool.map(slice_REFIT,  ((file_path, slice, ind+2, ind+1,
+                                 n_app, './exm' + str(ind) + '/freezer/', )
+                                for ind in range(slice-4)))
         pool.close()
         pool.join()
-    
+
     print('-'*20)
     pass
 
@@ -81,4 +81,3 @@ if __name__ == "__main__":
     n_app = 3
 
     do2(house_number, slice, n_app)
-

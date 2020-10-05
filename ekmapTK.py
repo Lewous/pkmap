@@ -1,6 +1,6 @@
- # -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # ekmapTK.py
-# ekmapTK using pandas.DataFrame 
+# ekmapTK using pandas.DataFrame
 #   with the help of multiprocess
 # keep original ekmapTK as ekmapTK0
 
@@ -55,7 +55,7 @@ def line_count(file_path):
     # global TOTAL_LINE
     global FILE_PATH
     FILE_PATH = file_path
-    with open(file_path,'rb') as f:
+    with open(file_path, 'rb') as f:
         count = 0
         while True:
             data = f.read(0x400000)
@@ -67,7 +67,7 @@ def line_count(file_path):
     return count
 
 
-def filter(a, width = 3):
+def filter(a, width=3):
     """
     median filtrate executor
 
@@ -79,7 +79,7 @@ def filter(a, width = 3):
 
     return: an a-size tuple created with same length as `a'
     """
-    
+
     half_width = int(0.5 * width)
     b = (a[0], )
 
@@ -109,7 +109,6 @@ def filter(a, width = 3):
 
 
 def GC(n):
-    
     """
     generate `Gray Code' using self-calling function
 
@@ -143,8 +142,8 @@ def KM(a, b):
     a = int(fabs(a))
     b = int(fabs(b))
 
-    return DataFrame(full([2**a, 2**b], nan), 
-                    index=GC(a), columns=GC(b))
+    return DataFrame(full([2**a, 2**b], nan),
+                     index=GC(a), columns=GC(b))
 
 
 def beauty_time(time):
@@ -184,7 +183,7 @@ def do_count(arg2):
 
         # used in .iterrows()
         # nw = ''.join(k[1].astype('int8').astype('str'))
-        #used in .itertuples()
+        # used in .itertuples()
         nw = ''.join([str(int(k)) for k in k[1:]])
         # nw = ''.join([str(k) for k in int8(k[1:])])
 
@@ -196,11 +195,11 @@ def do_count(arg2):
 
         # for 0 default
         val[nw] += 1
-    
+
     return val
 
 
-def read_REFIT(file_path = "", save_file = False, slice = None):
+def read_REFIT(file_path="", save_file=False, slice=None):
     """
     ready data to plot
 
@@ -210,7 +209,7 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
         is None: no slice
         is integer: slice dataset into `slice' piece
         == this will affect the process number `PN' of multiprocess
-    
+
     return: 
         data2: a dict of EKMap:
             '01010000': 35,     # counting consequence
@@ -241,19 +240,18 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
     # file_path.split('/')[-1].split('.')[:-1][0]
 
     # if data0.empty:
-    with tqdm(leave = False, 
-            bar_format = "reading " + file_name + " ...") as pybar:
+    with tqdm(leave=False,
+              bar_format="reading " + file_name + " ...") as pybar:
         data0 = read_csv(file_path)
 
     TOTAL_LINE = len(data0.index)
     # appliance total number
     appQ = len(data0.columns) - 4
-    print("find `" + str(appQ) + "' appliance with `" + 
-            str(TOTAL_LINE) + "' lines data in " + file_name)
+    print("find `" + str(appQ) + "' appliance with `" +
+          str(TOTAL_LINE) + "' lines data in " + file_name)
 
-
-    # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1) 
-    #     for k in range(appQ)}) 
+    # data0.rename(columns = {'Appliance' + str(k+1): 'app' + str(k+1)
+    #     for k in range(appQ)})
     '''
     data0.columns is: 
       ['Time', 'Unix', 'Aggregate', 'Appliance1', 'Appliance2', 'Appliance3',
@@ -266,7 +264,7 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
     # add later as it's not necessary
 
     '''
-    
+
     # transfer to on/off value
     dx = data0.loc[:, 'Appliance1': 'Appliance9']
     data0.loc[:, 'Appliance1': 'Appliance9'] = (dx > threshold)
@@ -294,11 +292,11 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
             val0[t] = 0
             # print(t+': ' + str(val0[t]))
     # print([k + ': ' + str(val0[k]) for k in val0.keys()])
-    
+
     # fill in statics
     # c2: choose 8 app to analysis (app3 don't looks good)
     c2 = findall('Appliance[0-9]+', ''.join(data0.columns))
-    # c2 is a list of string 
+    # c2 is a list of string
     tic = time()
     # PN means number of process
     if slice:
@@ -309,22 +307,22 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
         # if `slice` is None, no slice, offer PN as 8
         PN = 8
 
-    x1 = linspace(0, TOTAL_LINE/1, num = PN + 1, dtype = 'int')
-    # x1 is a list of 
+    x1 = linspace(0, TOTAL_LINE/1, num=PN + 1, dtype='int')
+    # x1 is a list of
     x2 = (range(x1[k], x1[k+1]) for k in range(PN))
     # x2 is a generator of each scope in a tuple of two int
     print(x1)
     # result = list(range(PN))
-    with tqdm(leave = False, bar_format = "Counting ...") as pybar:
-    # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True, 
-    #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
+    with tqdm(leave=False, bar_format="Counting ...") as pybar:
+        # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True,
+        #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
         with Pool() as pool:
             # for k in range(PN):
             #     x = next(x2)
             #     print(x)
             result = pool.map(do_count,  (
-                (val0.copy(), data0.loc[data0.index.isin(k), c2].copy()) 
-                for k in x2 ))
+                (val0.copy(), data0.loc[data0.index.isin(k), c2].copy())
+                for k in x2))
             pool.close()
             pool.join()
 
@@ -336,10 +334,10 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
         # data2 is a list of dict with `slice' items
         data2 = result.copy()
 
-        print(f'{sum([sum(list(data2[k].values())) for k in range(slice)])=}' + '\n')
+        print(
+            f'{sum([sum(list(data2[k].values())) for k in range(slice)])=}' + '\n')
         pass
-        
-        
+
     else:
         # `slice' is None, no slice
         data2 = val0.copy()
@@ -348,8 +346,8 @@ def read_REFIT(file_path = "", save_file = False, slice = None):
         #     # include np.nan
         #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
         #     data2[k] = x1
-        data2 = {k: sum([result[t][k] for t in range(len(result))]) 
-            for k in result[0].keys()}
+        data2 = {k: sum([result[t][k] for t in range(len(result))])
+                 for k in result[0].keys()}
         # print(data2.items())
 
         # [print(k) for k in data2.items()]
@@ -370,14 +368,14 @@ def read_EKfile(file_path):
     loading data from my format
     """
     with open(file_path, 'r') as f:
-        data2 = {k.split(':')[0]:int(k.split(':')[1]) for k in f}
+        data2 = {k.split(':')[0]: int(k.split(':')[1]) for k in f}
     appQ = len(tuple(data2.keys())[0])
 
     return data2, appQ
 
 
-def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True, 
-            title = "", pats = []):
+def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
+            title="", pats=[]):
     """
     do plot, save EKMap figs 
 
@@ -411,7 +409,7 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
         for _col in ekmap.columns:
             d = data2[_ind + _col]
             if d:
-                # d > 0                
+                # d > 0
                 ekmap.loc[_ind, _col] = log(d)/ek
             else:
                 # d == 0
@@ -419,16 +417,16 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
 
     # print(ekmap)
     sn.set()
-    plt.figure(figsize = (15, 8))
+    plt.figure(figsize=(15, 8))
     # cmap = 'inferno'
-    ax = sn.heatmap(ekmap, cbar = False, cmap = cmap)
-    plt.ylabel('High ' + str(xa) + ' bits', size = 18)
-    plt.xlabel('Low ' + str(xb) + ' bits', size = 18)
+    ax = sn.heatmap(ekmap, cbar=False, cmap=cmap)
+    plt.ylabel('High ' + str(xa) + ' bits', size=18)
+    plt.xlabel('Low ' + str(xb) + ' bits', size=18)
     plt.yticks(rotation='horizontal')
     plt.xticks(rotation=45)
     if title:
         # `title' has been specified
-        ax.set_title(title, size = 24)
+        ax.set_title(title, size=24)
         # see in https://stackoverflow.com/questions/42406233/
         pass
 
@@ -442,12 +440,14 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     for fig_type in fig_type:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
-        plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type, bbox_inches='tight')
+        plt.savefig('REFIT/EKMap' +
+                    file_name[5:] + fig_type, bbox_inches='tight')
 
     if do_show:
         plt.show()
-    
+
     return 0
+
 
 def slice_REFIT(args):
     """
@@ -466,11 +466,11 @@ def slice_REFIT(args):
     file_name = findall('/(.+)\.', file_path)[0]
     file_dir = '/'.join(file_path.split('/')[:-1])
     # file_path.split('/')[-1].split('.')[:-1][0]
-    
+
     if data0.empty:
         # reuse `data0' when slicing multiple times
-        with tqdm(leave = False, 
-                bar_format = "reading " + file_name + " ...") as pybar:
+        with tqdm(leave=False,
+                  bar_format="reading " + file_name + " ...") as pybar:
             data0 = read_csv(file_path)
 
     app = 'Appliance'+str(n_app)    # such as 'Appliance3'
@@ -493,8 +493,8 @@ def slice_REFIT(args):
     print(f'{TOTAL_LINE=}')
     print(f'{(mean_agg, std_agg)=}')
     print(f'{(mean_app, std_app)=}')
-    
-    x1 = linspace(0, TOTAL_LINE, num = n_slice + 1, dtype = 'int')
+
+    x1 = linspace(0, TOTAL_LINE, num=n_slice + 1, dtype='int')
     # x1 is a list
     print(f'{x1=}')
     x2 = ((x1[k], x1[k+1]) for k in range(n_slice))
@@ -504,70 +504,29 @@ def slice_REFIT(args):
         datax = data0.loc[k[0]:k[1], ['Aggregate', app]]
         data_agg = (datax['Aggregate'] - mean_agg) / std_agg
         data_app = (datax[app] - mean_app) / std_app
-        data2save = concat([data_agg, data_app], axis = 1) 
+        data2save = concat([data_agg, data_app], axis=1)
         if ind == n_test:
             # is test set
             data2save.to_csv(save_dir + name_app + '_test_' + 'S' + str(n_test)
-                            + '.csv', index=False)
+                             + '.csv', index=False)
             print('\tslice ' + str(ind) + ' for testing')
         elif ind == n_valid:
             # is validation set
             data2save.to_csv(save_dir + name_app + '_valid_' + 'S' + str(n_valid)
-                            + '.csv', index=False)
+                             + '.csv', index=False)
             print('\tslice ' + str(ind) + ' for validation')
         else:
             # is training set
-            data2save.to_csv(save_dir + name_app + '_training_' 
-                            + '.csv', index=False, mode = 'a', header=False)
+            data2save.to_csv(save_dir + name_app + '_training_'
+                             + '.csv', index=False, mode='a', header=False)
 
     return None
+
 
 if __name__ == "__main__":
     files = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
     # files = ['CLEAN_House8']
     print(f'{files=}')
-
-    for file_name in files:
-
-        # file_path = 'REFIT/' + file_name + '.csv'
-        # data2, appQ = read_REFIT(file_path)
-
-        file_path = 'REFIT/EKMap' + file_name[5:] + '.csv'
-        data2, appQ = read_EKfile(file_path)
-
-
-        # fill in data
-        xa = int(appQ / 2)
-        xb = int(appQ - xa)
-        ekmap = KM(xa, xb)
-        # ek = log(data2['0' * appQ])
-        # ek = log(max(data2.values()))
-        # ek = log(appQ)
-
-        for _ind in ekmap.index:
-            for _col in ekmap.columns:
-                d = data2[_ind + _col]
-                if d:   
-                    ekmap.loc[_ind, _col] = log(d)
-                else:
-                    pass
-
-        # print(ekmap)
-
-        sn.set()
-        fig, ax = plt.subplots(figsize = (15, 8))
-        cmap = 'inferno'
-        sn.heatmap(ekmap, cbar = False, cmap = cmap)
-        plt.ylabel('High ' + str(xa) + ' bits', size = 18)
-        plt.xlabel('Low ' + str(xb) + ' bits', size = 18)
-        plt.yticks(rotation='horizontal')
-        plt.xticks(rotation=45)
-        # plt.title(f'{cmap=}')
-        # for fig_type in ('.png', '.pdf', '.tiff'):
-        for fig_type in ('.eps', ):
-            plt.savefig('REFIT/EKMap' + file_name[5:] + fig_type, bbox_inches='tight')
-            pass
-        # plt.show()
 
     t = '='*6
     print(t + ' finished ' + t)
