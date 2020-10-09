@@ -38,31 +38,31 @@ def do1(house_number, slice):
         #                         fill=False, edgecolor='c', lw=6))
         # highL.append(pat.Rectangle((x, 10), wid, 4,
         #                         fill=False, edgecolor='c', lw=6))
-        highL.append(pat.Rectangle((x, 0), wid, 16,
-                                   fill=False, edgecolor='c', lw=6))
+        # highL.append(pat.Rectangle((x, 0), wid, 16,
+        #                            fill=False, edgecolor='c', lw=6))
         pass
-    do_plot(data2, appQ, do_show=True, pats=highL,
-            title='1in1_app8 is on')
 
-    k = 0
-    for data3 in data2:
-        k += 1
-        titl = str(k) + r'in' + str(slice) + '_app3 is on and app8 is off'
-        do_plot(data3, appQ, title=titl, do_show=True, pats=highL.copy(),
-                fig_type=(r'_' + titl+'.png', r'_' + titl + '.eps', ), )
+    # for k, datax in zip(range(slice), data2):
+    #     titl = str(k+1) + r'in' + str(slice)  # + '_app3 is on and app8 is off'
+    #     do_plot(datax, appQ, title=titl, do_show=False, pats=highL,
+    #             # fig_types=(r'_' + titl+'.png', r'_' + titl + '.eps', ), )
+    #             fig_types=(r'_' + titl+'.png', ), )
 
+    do_plot(data2, appQ, titles=tuple(str(k+1) + r'in' + str(slice) for k in range(slice)),
+            do_show=True, pats=highL, fig_types=('.png', ),
+            )
     return None
 
 
 def do2(house_number, slice, n_app):
     """
-    generate data fits Mingjun Zhong's code
+    generate data fits Mingjun Zhong's trainging and testing
     """
 
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
 
     with Pool() as pool:
-        pool.map(slice_REFIT,  ((file_path, slice, ind+2, ind+1,
+        pool.map(slice_REFIT, ((file_path, slice, ind+2, ind+1,
                                  n_app, './exm' + str(ind) + '/freezer/', )
                                 for ind in range(slice-4)))
         pool.close()
@@ -76,8 +76,9 @@ def do2(house_number, slice, n_app):
 
 if __name__ == "__main__":
 
-    house_number = 7
-    slice = 10
+    house_number = 5
+    slice = 4
     n_app = 3
 
-    do2(house_number, slice, n_app)
+    do1(house_number, slice)
+    # do2(house_number, slice, n_app)
