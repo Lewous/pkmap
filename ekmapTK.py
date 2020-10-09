@@ -7,15 +7,13 @@
 # from pandas.core.indexes.datetimes import date_range
 # from ekmapTK0 import TOTAL_LINE
 
-import re
 from numpy import sum
-from numpy import fabs
+from numpy import fabs, ceil, sqrt
 from numpy import log
 from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace
 from numpy import full
-from numpy.core.numeric import outer
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -177,7 +175,7 @@ def beauty_time(time):
 
 def do_count(arg2):
     val, data1 = arg2
-    # print(x2)
+    # `val' is a container
     for k in data1.itertuples():
         # combinate new row as a key of a dict
 
@@ -317,11 +315,9 @@ def read_REFIT(file_path="", save_file=False, slice=None):
         # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True,
         #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
         with Pool() as pool:
-            # for k in range(PN):
-            #     x = next(x2)
-            #     print(x)
+
             result = pool.map(do_count,  (
-                (val0.copy(), data0.loc[data0.index.isin(k), c2].copy())
+                (val0, data0.loc[data0.index.isin(k), c2].copy())
                 for k in x2))
             pool.close()
             pool.join()
@@ -340,19 +336,13 @@ def read_REFIT(file_path="", save_file=False, slice=None):
 
     else:
         # `slice' is None, no slice
+        # integrate `result' as `data2'
         data2 = val0.copy()
-        # for k in result[0].keys():
-        #     x0 = (result[t][k] for t in range(len(result)))
-        #     # include np.nan
-        #     x1 = sum([0 if isnan(t) else t for t in x0], dtype='int')
-        #     data2[k] = x1
+
         data2 = {k: sum([result[t][k] for t in range(len(result))])
                  for k in result[0].keys()}
-        # print(data2.items())
 
-        # [print(k) for k in data2.items()]
         print(f'{sum(list(data2.values()))=}' + '\n')
-        # print(sum(data2.values()))
 
     # save data2
     if save_file:
@@ -374,18 +364,22 @@ def read_EKfile(file_path):
     return data2, appQ
 
 
-def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
-            title="", pats=[]):
+def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
+            titles="", pats=[]):
     """
     do plot, save EKMap figs 
 
     data2: a dict of EKMap
+            or a list of dict of EKMap
     appQ: integer, the number of appliance
     cmap: 
-    fig_type: an enumerable object, tuple here
+    fig_types: an enumerable object, tuple here
+            used if figure saving required
     do_show: run `plt.show()' or not 
-        (fig still showed, fix later since is harmless)
+        (fig still showed when set `False', fix later since is harmless)
     title: a string, the fig title 
+            must have same size as `data2' (enumerate together)
+    pats: add rectangle if needed, an enumerable object
 
     return: no return
 
@@ -399,52 +393,71 @@ def do_plot(data2, appQ, cmap='inferno', fig_type=(), do_show=True,
     # fill in data
     xa = int(appQ / 2)
     xb = int(appQ - xa)
-    ekmap = KM(xa, xb)
-    # ek = log(data2['0' * appQ])
-    # ek = log(max(data2.values()))
-    # ek = log(appQ)
-    ek = 1
 
-    for _ind in ekmap.index:
-        for _col in ekmap.columns:
-            d = data2[_ind + _col]
-            if d:
-                # d > 0
-                ekmap.loc[_ind, _col] = log(d)/ek
-            else:
-                # d == 0
-                pass
 
-    # print(ekmap)
+
+    if isinstance(data2, dict):
+        data2 = (data2, )
+        # number of slice
+        n_slice = 1
+    else:
+        n_slice = len(titles)
+
+
+    # ====== prepare for canvas distribute ======
+    num_row = int(ceil(sqrt(n_slice)))
+    num_col = int(ceil(n_slice / num_row))
+
     sn.set()
-    plt.figure(figsize=(15, 8))
-    # cmap = 'inferno'
-    ax = sn.heatmap(ekmap, cbar=False, cmap=cmap)
-    plt.ylabel('High ' + str(xa) + ' bits', size=18)
-    plt.xlabel('Low ' + str(xb) + ' bits', size=18)
-    plt.yticks(rotation='horizontal')
-    plt.xticks(rotation=45)
-    if title:
-        # `title' has been specified
-        ax.set_title(title, size=24)
-        # see in https://stackoverflow.com/questions/42406233/
-        pass
+    fig1, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
+    for title, datax, ind in zip(titles, data2, 
+        ((r, c) for r in range(num_row) for c in range(num_col))):
+        
+        # ====== `ekmap' is the contant of a subplot ======
+        ekmap = KM(xa, xb)
+        # ek = log(data2['0' * appQ])
+        # ek = log(max(data2.values()))
+        # ek = log(appQ)
+        ek = 1
+        
+        for _ind in ekmap.index:
+            for _col in ekmap.columns:
+                d = datax[_ind + _col]
+                if d:
+                    # d > 0
+                    ekmap.loc[_ind, _col] = log(d)/ek
+                else:
+                    # d == 0
+                    pass
+        
+        ax = sn.heatmap(ekmap, ax=axes[ind[0], ind[1]], cbar=False, cmap=cmap)
+        plt.ylabel('High ' + str(xa) + ' bits', size=18)
+        plt.xlabel('Low ' + str(xb) + ' bits', size=18)
+        plt.yticks(rotation='horizontal')
+        plt.xticks(rotation=45)
+        if title:
+            # `title' has been specified
+            ax.set_title(title, size=24)
+            # see in https://stackoverflow.com/questions/42406233/
+            pass
 
-    if pats:
-        # pats is not empty
-        for k in pats:
-            # newk = copy(k)
-            ax.add_patch(copy(k))
-            # see in https://stackoverflow.com/questions/47554753
+        if pats:
+            # `pats' is not empty, do aditional draw
+            for pat in pats:
+                # newk = copy(k)
+                ax.add_patch(copy(pat))
+                # see in https://stackoverflow.com/questions/47554753
 
-    for fig_type in fig_type:
+    for fig_type in fig_types:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
-        plt.savefig('REFIT/EKMap' +
+        plt.savefig('./figs/EKMap' +
                     file_name[5:] + fig_type, bbox_inches='tight')
 
     if do_show:
         plt.show()
+    else:
+        plt.close(fig1)
 
     return 0
 
@@ -472,6 +485,8 @@ def slice_REFIT(args):
         with tqdm(leave=False,
                   bar_format="reading " + file_name + " ...") as pybar:
             data0 = read_csv(file_path)
+    else:
+        print("use old `data0'")
 
     app = 'Appliance'+str(n_app)    # such as 'Appliance3'
     name_app = 'freezer'
