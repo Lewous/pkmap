@@ -12,7 +12,7 @@ from numpy import fabs, ceil, sqrt
 from numpy import log
 from numpy import nan, isnan
 from numpy import divmod
-from numpy import linspace
+from numpy import linspace, arange
 from numpy import full
 
 from pandas import DataFrame
@@ -271,7 +271,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     counting
     store statics in a dict:
     val0 = {
-        '11100010': 53,        # just an example
+        '11100010': 53,        # just an enxmple
         ......
     }
     '''
@@ -281,10 +281,10 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     val0 is the template incase lose of keys()
     '''
     val0 = {}
-    xa = int(appQ / 2)
-    xb = int(appQ - xa)
-    for k in GC(xa):
-        for j in GC(xb):
+    nx = int(appQ / 2)
+    ny = int(appQ - nx)
+    for k in GC(nx):
+        for j in GC(ny):
             t = k + j   # is str like '11110001'
             # val0[t] = nan       # for plot benfits
             val0[t] = 0
@@ -391,10 +391,8 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
 
     global file_name
     # fill in data
-    xa = int(appQ / 2)
-    xb = int(appQ - xa)
-
-
+    nx = int(appQ / 2)
+    ny = int(appQ - nx)
 
     if isinstance(data2, dict):
         data2 = (data2, )
@@ -403,18 +401,22 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
     else:
         n_slice = len(titles)
 
-
     # ====== prepare for canvas distribute ======
     num_row = int(ceil(sqrt(n_slice)))
     num_col = int(ceil(n_slice / num_row))
 
-    sn.set()
-    fig1, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
-    for title, datax, ind in zip(titles, data2, 
-        ((r, c) for r in range(num_row) for c in range(num_col))):
+    # sn.set()
+    # fig1, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
+    fsize = (num_row * 2**(ny-nx)*3.7, num_col*4)
+    fig1, axes = plt.subplots(
+        num_col, num_row, figsize=fsize)
+    print(f'{fsize=}')
+
+    for datax, title, ind in zip(data2, titles,
+                                 ((r, c) for r in range(num_col) for c in range(num_row))):
         
         # ====== `ekmap' is the contant of a subplot ======
-        ekmap = KM(xa, xb)
+        ekmap = KM(nx, ny)
         # ek = log(data2['0' * appQ])
         # ek = log(max(data2.values()))
         # ek = log(appQ)
@@ -429,12 +431,24 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
                 else:
                     # d == 0
                     pass
-        
-        ax = sn.heatmap(ekmap, ax=axes[ind[0], ind[1]], cbar=False, cmap=cmap)
-        plt.ylabel('High ' + str(xa) + ' bits', size=18)
-        plt.xlabel('Low ' + str(xb) + ' bits', size=18)
-        plt.yticks(rotation='horizontal')
-        plt.xticks(rotation=45)
+        if n_slice > 1:
+            ax = axes[ind[0], ind[1]]
+        else:
+            ax = copy(axes)
+
+        ax.pcolormesh(ekmap, cmap=cmap)
+        # get code from https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html
+        # ax = sn.heatmap(ekmap, ax=axes[ind[0], ind[1]], cbar=False, cmap=cmap)
+        # ax.set_ylabel('High ' + str(nx) + ' bits', size=18)
+        # ax.set_xlabel('Low ' + str(ny) + ' bits', size=18)
+        ax.set_yticks(arange(2**nx))
+        ax.set_xticks(arange(2**ny))
+        ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
+        ax.set_xticklabels(ekmap.columns.values,
+                           fontfamily='monospace', rotation=45)
+        # plt.setp(ax.get_xticklabels(), rotation=45,)
+        # plt.yticks(rotation='horizontal')
+        # plt.xticks(rotation=45)
         if title:
             # `title' has been specified
             ax.set_title(title, size=24)
@@ -447,6 +461,7 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
                 # newk = copy(k)
                 ax.add_patch(copy(pat))
                 # see in https://stackoverflow.com/questions/47554753
+    fig1.tight_layout()
 
     for fig_type in fig_types:
         plt.pause(1e-13)

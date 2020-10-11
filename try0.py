@@ -44,13 +44,14 @@ def do1(house_number, slice):
 
     # for k, datax in zip(range(slice), data2):
     #     titl = str(k+1) + r'in' + str(slice)  # + '_app3 is on and app8 is off'
-    #     do_plot(datax, appQ, title=titl, do_show=False, pats=highL,
-    #             # fig_types=(r'_' + titl+'.png', r'_' + titl + '.eps', ), )
-    #             fig_types=(r'_' + titl+'.png', ), )
+    #     do_plot((datax, ), appQ, titles=(titl, ), do_show=True, pats=highL, )
+        # fig_types=(r'_' + titl+'.png', r'_' + titl + '.eps', ), )
+        # fig_types=(r'_' + titl+'.png', ), )
 
     do_plot(data2, appQ, titles=tuple(str(k+1) + r'in' + str(slice) for k in range(slice)),
-            do_show=True, pats=highL, fig_types=('.png', ),
+            do_show=True, pats=highL, fig_types=('in' + str(slice) + '.png', ),
             )
+
     return None
 
 
@@ -63,8 +64,8 @@ def do2(house_number, slice, n_app):
 
     with Pool() as pool:
         pool.map(slice_REFIT, ((file_path, slice, ind+2, ind+1,
-                                 n_app, './exm' + str(ind) + '/freezer/', )
-                                for ind in range(slice-4)))
+                                n_app, './exm' + str(ind) + '/freezer/', )
+                               for ind in range(slice-4)))
         pool.close()
         pool.join()
 
@@ -77,7 +78,7 @@ def do2(house_number, slice, n_app):
 if __name__ == "__main__":
 
     house_number = 5
-    slice = 4
+    slice = 5
     n_app = 3
 
     do1(house_number, slice)
