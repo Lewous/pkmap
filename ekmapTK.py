@@ -27,7 +27,7 @@ from re import findall
 from os import listdir
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
-import seaborn as sn
+# import seaborn as sn
 from copy import copy
 import os
 
@@ -364,64 +364,98 @@ def read_EKfile(file_path):
     return data2, appQ
 
 
-def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
-            titles="", pats=[]):
+def reorder(ahead=(), appQ=9):
     """
-    do plot, save EKMap figs 
+    ====== inner func ======
+    create new order with `ahead' ahead
+    ahead: index of app want to ahead in each axes
+            so that can be easily obsevered in the Karnaugh Map
+            start from 0, used directly as index
+            at most two items
+    appQ: integer, total number of appliance
+        decide the index of second ahead to insert
+        also is the length of return tuple
 
-    data2: a dict of EKMap
-            or a list of dict of EKMap
-    appQ: integer, the number of appliance
-    cmap: 
-    fig_types: an enumerable object, tuple here
-            used if figure saving required
-    do_show: run `plt.show()' or not 
-        (fig still showed when set `False', fix later since is harmless)
-    title: a string, the fig title 
-            must have same size as `data2' (enumerate together)
-    pats: add rectangle if needed, an enumerable object
+    return: reorderd tuple of index for data2
+            like: (4, 0, 1, 2, 7, 3, 5, 6, 8) where (4,7) is ahead
+    
+    """
 
-    return: no return
+    print('get ' + f'{ahead=}')
+    # wash input argument
+    try:
+        reod = set(ahead)
+    except TypeError as identifier:
+        reod = (ahead, )
+    nx = int(appQ / 2)      # number of high bits in y-axis
+    ny = int(appQ - nx)     # number of low bits in x-axis
+    
+    order2 = list(range(appQ))
+    for val in reod:
+        try:
+            order2.remove(val)
+        except ValueError as identifier:
+            pass
 
-    ====== WARNING ======
-    plt.savefig() may occur `FileNotFoundError: [Errno 2]'
-    when blending use of slashes and backslashes
-    see in https://stackoverflow.com/questions/16333569
+    order2.insert(0, min(reod))
+    if len(reod) > 1:
+        order2.insert(nx, max(reod))
+
+    return tuple(order2)
+
+
+def do_plot_single(data2, cmap='inferno', fig_types=(), do_show=True,
+                   titles="", pats=[]):
+    """
+    plot one axe in one figure
+    """
+    pass
+
+
+def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
+                  titles="", pats=[]):
+    """
+    plot multiplt axes in one figure
+
+    ====== these have same lenght ======
+    data2: a list of EKMap dict
+    titles: a list of string
+
+    ====== these shared among axes ======
+    pats
+    cmap
+
     """
 
     global file_name
     # fill in data
+    appQ = len(tuple(data2.keys())[0])  # total number of appliance
     nx = int(appQ / 2)
     ny = int(appQ - nx)
 
-    if isinstance(data2, dict):
-        data2 = (data2, )
-        # number of slice
-        n_slice = 1
-    else:
-        n_slice = len(titles)
+    # number of slice
+    n_slice = len(titles)
 
     # ====== prepare for canvas distribute ======
     num_row = int(ceil(sqrt(n_slice)))
     num_col = int(ceil(n_slice / num_row))
 
-    # sn.set()
     # fig1, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
-    fsize = (num_row * 2**(ny-nx)*3.7, num_col*4)
+    fsize = (int(num_row * 2**(ny-nx)*3.6), num_col*4)
     fig1, axes = plt.subplots(
         num_col, num_row, figsize=fsize)
     print(f'{fsize=}')
 
     for datax, title, ind in zip(data2, titles,
-                                 ((r, c) for r in range(num_col) for c in range(num_row))):
-        
+                                 ((c, r) for c in range(num_col) for r in range(num_row))):
+
         # ====== `ekmap' is the contant of a subplot ======
-        ekmap = KM(nx, ny)
+        ekmap = KM(nx, ny)      # preparing a container
         # ek = log(data2['0' * appQ])
         # ek = log(max(data2.values()))
-        # ek = log(appQ)
+        ek0 = log(appQ)
         ek = 1
-        
+
         for _ind in ekmap.index:
             for _col in ekmap.columns:
                 d = datax[_ind + _col]
@@ -436,7 +470,7 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
         else:
             ax = copy(axes)
 
-        ax.pcolormesh(ekmap, cmap=cmap)
+        ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=ek0)
         # get code from https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html
         # ax = sn.heatmap(ekmap, ax=axes[ind[0], ind[1]], cbar=False, cmap=cmap)
         # ax.set_ylabel('High ' + str(nx) + ' bits', size=18)
@@ -473,6 +507,50 @@ def do_plot(data2, appQ, cmap='inferno', fig_types=(), do_show=True,
         plt.show()
     else:
         plt.close(fig1)
+
+    return 0
+
+
+def do_plot(data2, reorder=(), cmap='inferno', fig_types=(), do_show=True,
+            titles="", pats=[]):
+    """
+    do plot, save EKMap figs 
+
+    data2: a dict of EKMap
+            or a list of dict of EKMap
+    appQ: integer, the number of appliance
+    reorder:  put at least two app ahead in each axes
+            so that can be easily obsevered in the Karnaugh Map
+            start from 0, used directly as index
+    fig_types: an enumerable object, tuple here
+            used if figure saving required
+    do_show: run `plt.show()' or not 
+        (fig still showed when set `False', fix later since is harmless)
+    title: a string, the fig title 
+            must have same size as `data2' (enumerate together)
+    pats: add rectangle if needed, an enumerable object
+
+    return: no return
+
+    ====== WARNING ======
+    plt.savefig() may occur `FileNotFoundError: [Errno 2]'
+    when blending use of slashes and backslashes
+    see in https://stackoverflow.com/questions/16333569
+    """
+    if reorder:
+        # redrder `data2' if needed
+        # will re-create .keys accordingly
+        pass
+
+    if isinstance(data2, dict):
+        # data2 = (data2, )
+        # number of slice
+        # n_slice = 1
+        do_plot_single(data2, cmap, fig_types, do_show,
+                       titles, pats)
+    else:
+        do_plot_multi(data2, cmap, fig_types, do_show,
+                      titles, pats)
 
     return 0
 
