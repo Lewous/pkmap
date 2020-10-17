@@ -364,7 +364,7 @@ def read_EKfile(file_path):
     return data2, appQ
 
 
-def reorder(ahead=(), appQ=9):
+def new_order(ahead=(), appQ=9):
     """
     ====== inner func ======
     create new order with `ahead' ahead
@@ -372,16 +372,17 @@ def reorder(ahead=(), appQ=9):
             so that can be easily obsevered in the Karnaugh Map
             start from 0, used directly as index
             at most two items
+            empty item is also accept
     appQ: integer, total number of appliance
         decide the index of second ahead to insert
         also is the length of return tuple
 
     return: reorderd tuple of index for data2
             like: (4, 0, 1, 2, 7, 3, 5, 6, 8) where (4,7) is ahead
-    
+
     """
 
-    print('get ' + f'{ahead=}')
+    # print('get ' + f'{ahead=}')
     # wash input argument
     try:
         reod = set(ahead)
@@ -389,17 +390,17 @@ def reorder(ahead=(), appQ=9):
         reod = (ahead, )
     nx = int(appQ / 2)      # number of high bits in y-axis
     ny = int(appQ - nx)     # number of low bits in x-axis
-    
+
     order2 = list(range(appQ))
-    for val in reod:
+    for val, ind in zip((min(reod), max(reod), ), (0, nx, )):
         try:
             order2.remove(val)
+            # ensure the item insert inside range
+            # avoid over remove when `ahead' have multiple items
+            order2.insert(ind, val)
         except ValueError as identifier:
+            # `val' out of range, skip
             pass
-
-    order2.insert(0, min(reod))
-    if len(reod) > 1:
-        order2.insert(nx, max(reod))
 
     return tuple(order2)
 
@@ -511,7 +512,7 @@ def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
     return 0
 
 
-def do_plot(data2, reorder=(), cmap='inferno', fig_types=(), do_show=True,
+def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
             titles="", pats=[]):
     """
     do plot, save EKMap figs 
@@ -537,10 +538,11 @@ def do_plot(data2, reorder=(), cmap='inferno', fig_types=(), do_show=True,
     when blending use of slashes and backslashes
     see in https://stackoverflow.com/questions/16333569
     """
-    if reorder:
+    if ahead:
         # redrder `data2' if needed
         # will re-create .keys accordingly
-        pass
+        appQ = len(tuple(data2.keys())[0])  # total number of appliance
+        order2 = new_order(ahead, appQ)
 
     if isinstance(data2, dict):
         # data2 = (data2, )
