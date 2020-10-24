@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-# ekmapTK.py
+# === ekmapTK.py ===
 # ekmapTK using pandas.DataFrame
 #   with the help of multiprocess
-# keep original ekmapTK as ekmapTK0
-
-# from pandas.core.indexes.datetimes import date_range
-# from ekmapTK0 import TOTAL_LINE
 
 from numpy import sum
 from numpy import fabs, ceil, sqrt
@@ -14,6 +10,7 @@ from numpy import nan, isnan
 from numpy import divmod
 from numpy import linspace, arange
 from numpy import full
+from numpy import save, load
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -32,7 +29,7 @@ from copy import copy
 import os
 
 TOTAL_LINE = 6960002
-FILE_PATH = 'REFIT/CLEAN_House1.csv'
+FILE_PATH = './REFIT/CLEAN_House1.csv'
 val0 = {}
 data0 = DataFrame([])
 file_name = 'Housex'
@@ -86,13 +83,10 @@ def filter(a, width=3):
         w2 += 2
         half_w = int(0.5 * w2)
         scope = a[:w2]
-        # print('w2 is ' + str(w2))
-        # print(scope)
         b += (sorted(scope)[half_w], )
 
     for kn in range(len(a) - width + 1):
         scope = a[kn:kn+width]
-        # print(scope)
         b += (sorted(scope)[half_width], )
 
     w2 = width
@@ -100,8 +94,6 @@ def filter(a, width=3):
         w2 -= 2
         half_w = int(0.5 * w2)
         scope = a[0-w2:]
-        # print('w2 is ' + str(w2))
-        # print(scope)
         b += (sorted(scope)[half_w], )
     return b
 
@@ -174,22 +166,22 @@ def beauty_time(time):
 
 
 def do_count(arg2):
+    '''
+    count how many times each stat appears
+    used in multi-processing, so I pack args in this way
+
+    val: the container holds the counting result
+        is a dict with `0' defult values
+    data1: a fixed DataFrame part to count
+
+    return: counting results
+    '''
+
     val, data1 = arg2
     # `val' is a container
     for k in data1.itertuples():
         # combinate new row as a key of a dict
-
-        # used in .iterrows()
-        # nw = ''.join(k[1].astype('int8').astype('str'))
-        # used in .itertuples()
-        nw = ''.join([str(int(k)) for k in k[1:]])
-        # nw = ''.join([str(k) for k in int8(k[1:])])
-
-        # for nan default
-        # if isnan(val[nw]):
-        #     val[nw] = 1
-        # else:
-        #     val[nw] += 1
+        nw = ''.join([str(int(u)) for u in k[1:]])
 
         # for 0 default
         val[nw] += 1
@@ -237,7 +229,6 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     file_dir = '/'.join(file_path.split('/')[:-1])
     # file_path.split('/')[-1].split('.')[:-1][0]
 
-    # if data0.empty:
     with tqdm(leave=False,
               bar_format="reading " + file_name + " ...") as pybar:
         data0 = read_csv(file_path)
@@ -288,8 +279,6 @@ def read_REFIT(file_path="", save_file=False, slice=None):
             t = k + j   # is str like '11110001'
             # val0[t] = nan       # for plot benfits
             val0[t] = 0
-            # print(t+': ' + str(val0[t]))
-    # print([k + ': ' + str(val0[k]) for k in val0.keys()])
 
     # fill in statics
     # c2: choose 8 app to analysis (app3 don't looks good)
@@ -312,8 +301,6 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     print(x1)
     # result = list(range(PN))
     with tqdm(leave=False, bar_format="Counting ...") as pybar:
-        # with tqdm(total = TOTAL_LINE * appQ, leave = False, ascii = True,
-        #         bar_format = "Counting ...{l_bar}{bar}|{n_fmt}/{total_fmt}") as pybar:
         with Pool() as pool:
 
             result = pool.map(do_count,  (
@@ -326,7 +313,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     print('finish counting in ' + beauty_time(toc-tic))
 
     if slice:
-        # `slice' is integer, will do slice
+        # `slice' is integer, will slice
         # data2 is a list of dict with `slice' items
         data2 = result.copy()
 
@@ -335,7 +322,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
         pass
 
     else:
-        # `slice' is None, no slice
+        # `slice' is None, won't slice
         # integrate `result' as `data2'
         data2 = val0.copy()
 
@@ -350,7 +337,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
             for k in data2.items():
                 f.write(':'.join([k[0], str(k[1])]) + '\n')
 
-    return data2, appQ
+    return data2
 
 
 def read_EKfile(file_path):
@@ -361,7 +348,7 @@ def read_EKfile(file_path):
         data2 = {k.split(':')[0]: int(k.split(':')[1]) for k in f}
     appQ = len(tuple(data2.keys())[0])
 
-    return data2, appQ
+    return data2
 
 
 def new_order(ahead=(), appQ=9):
@@ -382,17 +369,17 @@ def new_order(ahead=(), appQ=9):
 
     """
 
-    # print('get ' + f'{ahead=}')
     # wash input argument
+    ahead = tuple(int(k) for k in ahead if k > 0 and k < appQ)
     try:
         reod = set(ahead)
     except TypeError as identifier:
         reod = (ahead, )
     nx = int(appQ / 2)      # number of high bits in y-axis
-    ny = int(appQ - nx)     # number of low bits in x-axis
+    # ny = int(appQ - nx)     # number of low bits in x-axis
 
     order2 = list(range(appQ))
-    for val, ind in zip((min(reod), max(reod), ), (0, nx, )):
+    for val, ind in zip(reod, (0, nx, )):
         try:
             order2.remove(val)
             # ensure the item insert inside range
@@ -405,15 +392,72 @@ def new_order(ahead=(), appQ=9):
     return tuple(order2)
 
 
-def do_plot_single(data2, cmap='inferno', fig_types=(), do_show=True,
+def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
                    titles="", pats=[]):
     """
     plot one axe in one figure
+    data3: a dict 
+
     """
-    pass
+    global file_name
+    # fill in data
+    appQ = len(tuple(data3.keys())[0])  # total number of appliance
+    nx = int(appQ / 2)
+    ny = int(appQ - nx)
+
+    fig1, ax = plt.subplots(1, 1, figsize=(8, 5))
+
+    # ====== `ekmap' is the contant of a subplot ======
+    ekmap = KM(nx, ny)      # preparing a container
+    ek = 1
+    vmax = log(sum(tuple(data3.values())))
+
+    for _ind in ekmap.index:
+        for _col in ekmap.columns:
+            d = data3[_ind + _col]
+            if d:
+                # d > 0
+                ekmap.loc[_ind, _col] = log(d)/ek
+            # else:
+            #     # d == 0
+            #     pass
+    save('ek0.npy', ekmap)
+    # ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
+    ax.imshow(ekmap, cmap=cmap, vmin=0, vmax=vmax)
+    ax.set_yticks(arange(2**nx))
+    ax.set_xticks(arange(2**ny))
+    ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
+    ax.set_xticklabels(ekmap.columns.values,
+                       fontfamily='monospace', rotation=45)
+    title = copy(titles)
+    if title:
+        # `title' has been specified
+        ax.set_title(title, size=24)
+        # see in https://stackoverflow.com/questions/42406233/
+        pass
+
+    if pats:
+        # `pats' is not empty, do aditional draw
+        for pat in pats:
+            ax.add_patch(copy(pat))
+            # see in https://stackoverflow.com/questions/47554753
+    fig1.tight_layout()
+
+    for fig_type in fig_types:
+        plt.pause(1e-13)
+        # see in https://stackoverflow.com/questions/62084819/
+        plt.savefig('./figs/EKMap' +
+                    file_name[5:] + fig_type, bbox_inches='tight')
+
+    if do_show:
+        plt.show()
+    else:
+        plt.close(fig1)
+
+    return 0
 
 
-def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
+def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
                   titles="", pats=[]):
     """
     plot multiplt axes in one figure
@@ -430,7 +474,7 @@ def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
 
     global file_name
     # fill in data
-    appQ = len(tuple(data2.keys())[0])  # total number of appliance
+    appQ = len(tuple(data3[0].keys())[0])  # total number of appliance
     nx = int(appQ / 2)
     ny = int(appQ - nx)
 
@@ -447,43 +491,28 @@ def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
         num_col, num_row, figsize=fsize)
     print(f'{fsize=}')
 
-    for datax, title, ind in zip(data2, titles,
+    # ====== `ekmap' is the contant of a subplot ======
+    ekmap = KM(nx, ny)      # preparing a container
+    ek = 1
+    vmax = log(sum(tuple(data3[0].values())))
+    for datax, title, ind in zip(data3, titles,
                                  ((c, r) for c in range(num_col) for r in range(num_row))):
-
-        # ====== `ekmap' is the contant of a subplot ======
-        ekmap = KM(nx, ny)      # preparing a container
-        # ek = log(data2['0' * appQ])
-        # ek = log(max(data2.values()))
-        ek0 = log(appQ)
-        ek = 1
-
         for _ind in ekmap.index:
             for _col in ekmap.columns:
                 d = datax[_ind + _col]
                 if d:
                     # d > 0
                     ekmap.loc[_ind, _col] = log(d)/ek
-                else:
-                    # d == 0
-                    pass
-        if n_slice > 1:
-            ax = axes[ind[0], ind[1]]
-        else:
-            ax = copy(axes)
-
-        ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=ek0)
-        # get code from https://matplotlib.org/gallery/images_contours_and_fields/image_annotated_heatmap.html
-        # ax = sn.heatmap(ekmap, ax=axes[ind[0], ind[1]], cbar=False, cmap=cmap)
-        # ax.set_ylabel('High ' + str(nx) + ' bits', size=18)
-        # ax.set_xlabel('Low ' + str(ny) + ' bits', size=18)
+                # else:
+                #     # d == 0
+                #     pass
+        ax = axes[ind[0], ind[1]]
+        ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
         ax.set_yticks(arange(2**nx))
         ax.set_xticks(arange(2**ny))
         ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
         ax.set_xticklabels(ekmap.columns.values,
                            fontfamily='monospace', rotation=45)
-        # plt.setp(ax.get_xticklabels(), rotation=45,)
-        # plt.yticks(rotation='horizontal')
-        # plt.xticks(rotation=45)
         if title:
             # `title' has been specified
             ax.set_title(title, size=24)
@@ -493,7 +522,6 @@ def do_plot_multi(data2, cmap='inferno', fig_types=(), do_show=True,
         if pats:
             # `pats' is not empty, do aditional draw
             for pat in pats:
-                # newk = copy(k)
                 ax.add_patch(copy(pat))
                 # see in https://stackoverflow.com/questions/47554753
     fig1.tight_layout()
@@ -538,20 +566,26 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
     when blending use of slashes and backslashes
     see in https://stackoverflow.com/questions/16333569
     """
-    if ahead:
-        # redrder `data2' if needed
-        # will re-create .keys accordingly
+    try:
         appQ = len(tuple(data2.keys())[0])  # total number of appliance
-        order2 = new_order(ahead, appQ)
+    except AttributeError as identifier:
+        # type(data2) is a list
+        appQ = len(tuple(data2[0].keys())[0])
 
+    order_ind = new_order(ahead, appQ)
+
+    # function reconsitution
     if isinstance(data2, dict):
-        # data2 = (data2, )
-        # number of slice
-        # n_slice = 1
-        do_plot_single(data2, cmap, fig_types, do_show,
+        # data2 is single
+        data3 = {''.join([key[s] for s in order_ind]): data2[key]
+                 for key in data2.keys()}
+        do_plot_single(data3, cmap, fig_types, do_show,
                        titles, pats)
     else:
-        do_plot_multi(data2, cmap, fig_types, do_show,
+        # data2 is a list of dict
+        data3 = tuple({''.join([key[s] for s in order_ind]): datax[key]
+                       for key in datax.keys()} for datax in data2)
+        do_plot_multi(data3, cmap, fig_types, do_show,
                       titles, pats)
 
     return 0
@@ -562,7 +596,7 @@ def slice_REFIT(args):
     slice dataset into `n_slice' pieces
     and save for Mingjun Zhong's code
 
-    file_path: 
+    file_path: a string
     n_slice: integer, number to slice, 10 for house7
     n_valid: integer, number of slice for validation
     n_test: integer, number of slice for testing
@@ -637,6 +671,15 @@ if __name__ == "__main__":
     files = findall('(CLEAN_House[0-9]+).csv', '='.join(listdir('REFIT')))
     # files = ['CLEAN_House8']
     print(f'{files=}')
+
+    # this code will exhibit my novel assessment
+    for house_number, slice in ((5, 4, ), ):
+        file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
+        data2 = read_REFIT(file_path, slice=slice)
+
+        do_plot(data2, (0,), titles=tuple(str(k+1) + r'in' + str(slice) for k in range(slice)),
+                do_show=True, fig_types=('in' + str(slice) + '.png', ),
+                )
 
     t = '='*6
     print(t + ' finished ' + t)
