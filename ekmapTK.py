@@ -329,7 +329,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
         data2 = {k: sum([result[t][k] for t in range(len(result))])
                  for k in result[0].keys()}
 
-        print(f'{sum(list(data2.values()))=}' + '\n')
+        print(f'{sum(tuple(data2.values()))=}')
 
     # save data2
     if save_file:
@@ -409,6 +409,7 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
 
     # ====== `ekmap' is the contant of a subplot ======
     ekmap = KM(nx, ny)      # preparing a container
+    ekback = KM(nx, ny)     # backgroud color
     ek = 1
     vmax = log(sum(tuple(data3.values())))
 
@@ -418,17 +419,26 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
             if d:
                 # d > 0
                 ekmap.loc[_ind, _col] = log(d)/ek
-            # else:
+            else:
             #     # d == 0
-            #     pass
+                ekback.loc[_ind, _col] = 0.02
     save('ek0.npy', ekmap)
     # ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
-    ax.imshow(ekmap, cmap=cmap, vmin=0, vmax=vmax)
+
+    # basecolor = [20 if k else nan for k in ekmap]
+    ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
+    ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=0, vmax=vmax)
     ax.set_yticks(arange(2**nx))
     ax.set_xticks(arange(2**ny))
     ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
     ax.set_xticklabels(ekmap.columns.values,
                        fontfamily='monospace', rotation=45)
+    
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
     title = copy(titles)
     if title:
         # `title' has been specified
@@ -447,7 +457,8 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
         plt.savefig('./figs/EKMap' +
-                    file_name[5:] + fig_type, bbox_inches='tight')
+                    file_name[5:] + fig_type, 
+                    bbox_inches='tight')
 
     if do_show:
         plt.show()
@@ -486,33 +497,43 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
     num_col = int(ceil(n_slice / num_row))
 
     # fig1, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
-    fsize = (int(num_row * 2**(ny-nx)*3.6), num_col*4)
+    fsize = (int(num_row * 2**(ny-nx)*3), num_col*4)
     fig1, axes = plt.subplots(
         num_col, num_row, figsize=fsize)
     print(f'{fsize=}')
 
     # ====== `ekmap' is the contant of a subplot ======
     ekmap = KM(nx, ny)      # preparing a container
+    ekback = KM(nx, ny)
     ek = 1
     vmax = log(sum(tuple(data3[0].values())))
-    for datax, title, ind in zip(data3, titles,
-                                 ((c, r) for c in range(num_col) for r in range(num_row))):
+    # ax_it = (k for k in axes)
+    ind = ((c, r) for c in range(num_col) for r in range(num_row))
+    for datax, title, in zip(data3, titles, ):
         for _ind in ekmap.index:
             for _col in ekmap.columns:
                 d = datax[_ind + _col]
                 if d:
                     # d > 0
                     ekmap.loc[_ind, _col] = log(d)/ek
-                # else:
+                else:
                 #     # d == 0
-                #     pass
-        ax = axes[ind[0], ind[1]]
-        ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
-        ax.set_yticks(arange(2**nx))
-        ax.set_xticks(arange(2**ny))
-        ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
-        ax.set_xticklabels(ekmap.columns.values,
-                           fontfamily='monospace', rotation=45)
+                    ekback.loc[_ind, _col] = 0.02
+        ind2 = next(ind)
+        ax = axes[ind2[0], ind2[1]]
+        # ax = ax_it.next()
+        # ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
+        ax.imshow(ekback, cmap='Blues', vmin=0, vmax=1)
+        ax.imshow(ekmap, cmap=cmap, vmin=0, vmax=vmax)
+
+        ax.set_yticks([])
+        ax.set_xticks([])
+        # ax.set_yticks(arange(2**nx))
+        # ax.set_xticks(arange(2**ny))
+        # ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
+        # ax.set_xticklabels(ekmap.columns.values,
+        #                 fontfamily='monospace', rotation=45)
+        ax.axis('off')
         if title:
             # `title' has been specified
             ax.set_title(title, size=24)
@@ -524,6 +545,11 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
             for pat in pats:
                 ax.add_patch(copy(pat))
                 # see in https://stackoverflow.com/questions/47554753
+    # clean the rest axes
+    for ind2 in ind:
+        ax = axes[ind2[0], ind2[1]]
+        ax.axis('off')
+
     fig1.tight_layout()
 
     for fig_type in fig_types:
@@ -553,6 +579,7 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
             start from 0, used directly as index
     fig_types: an enumerable object, tuple here
             used if figure saving required
+            ## string along is not excepted ## 
     do_show: run `plt.show()' or not 
         (fig still showed when set `False', fix later since is harmless)
     title: a string, the fig title 
@@ -579,12 +606,14 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
         # data2 is single
         data3 = {''.join([key[s] for s in order_ind]): data2[key]
                  for key in data2.keys()}
+        print('do_plot_single')
         do_plot_single(data3, cmap, fig_types, do_show,
                        titles, pats)
     else:
         # data2 is a list of dict
         data3 = tuple({''.join([key[s] for s in order_ind]): datax[key]
                        for key in datax.keys()} for datax in data2)
+        print('do_plot_multiple')
         do_plot_multi(data3, cmap, fig_types, do_show,
                       titles, pats)
 
@@ -673,13 +702,13 @@ if __name__ == "__main__":
     print(f'{files=}')
 
     # this code will exhibit my novel assessment
-    for house_number, slice in ((5, 4, ), ):
-        file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
-        data2 = read_REFIT(file_path, slice=slice)
+    # for house_number, slice in ((5, 4, ), ):
+    #     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
+    #     data2 = read_REFIT(file_path, slice=slice)
 
-        do_plot(data2, (0,), titles=tuple(str(k+1) + r'in' + str(slice) for k in range(slice)),
-                do_show=True, fig_types=('in' + str(slice) + '.png', ),
-                )
+    #     do_plot(data2, (0,), titles=tuple(str(k+1) + r'in' + str(slice) for k in range(slice)),
+    #             do_show=True, fig_types=('in' + str(slice) + '.png', ),
+    #             )
 
     t = '='*6
     print(t + ' finished ' + t)
