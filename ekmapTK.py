@@ -488,13 +488,14 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     n_L, n_R, n_B, n_T = n_M
     wdd = {         # n_of_variables: (wdx, wdy, magnify_of_lxy)
         7: (0.8, 1.2),
-        9: (0.8, 1.3, 0.6), 
+        9: (1.182, 1, 0.6), 
     }
-    wdx = 0.6
-    wdy = 1
+    wdx, wdy, mg = wdd[appQ]
+    # wdx = 0.6
+    # wdy = 1
     wd1 = 0.3
     wd2 = 0
-    mg = 0.4
+    # mg = 0.4
     lx = mg*2**nx
     ly = mg*2**ny
     # if mod(appQ, 2):
@@ -542,7 +543,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     # ax.spines['right'].set_visible(False)
     # ax.spines['bottom'].set_visible(False)
     # ax.spines['left'].set_visible(False)
-    # ax.axis('off')
+    ax.axis('off')
 
     for S, pl, xy in zip(M, (gs[1, 0], gs[1,2], gs[2,1], gs[0,1]), ('L','R','B','T')):
         # S = L, R, B, T
@@ -602,7 +603,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
             ax_S.set_ylim(bottom=0-n_B*wd1+wd2, top=0)
         elif xy in ('T',):
             ax_S.set_ylim(bottom=0, top=n_T*wd1-wd2)
-        # ax_S.axis('off')
+        ax_S.axis('off')
 
     # ax_B = fig.add_subplot(gs[2,1], sharex=ax)
     # ax_B.add_patch(plt.Rectangle((1.5, 1), 1.99, -1.2, fill=False))
@@ -648,7 +649,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         # see in https://stackoverflow.com/questions/62084819/
         plt.savefig('./figs/EKMap' +
                     file_name[5:] + 
-                    # str(time())[-5:] + 
+                    str(time())[-5:] + 
                     fig_type, 
                     bbox_inches='tight')
 
