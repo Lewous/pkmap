@@ -5,8 +5,8 @@
 # from ekmapTK import line_count as lc
 # from ekmapTK import filter
 from ekmapTK import read_REFIT, slice_REFIT
-from ekmapTK import read_EKfile
-from ekmapTK import do_plot, GC
+from ekmapTK import read_EKfile, GC
+from ekmapTK import do_plot, do_plot2
 
 # from numpy import power
 # from numpy import pi
@@ -14,6 +14,7 @@ from ekmapTK import do_plot, GC
 # from numpy import linspace
 from numpy import load
 from numpy import arange, log
+from numpy import random as rd
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
@@ -23,6 +24,7 @@ from multiprocessing import Pool
 # from tqdm import tqdm
 import seaborn as sn
 import pandas as pd
+
 
 # artifical Dataset for illustration propuse
 AD = {'0000': 0, 
@@ -42,6 +44,20 @@ AD = {'0000': 0,
       '1001': 40272, 
       '1000': 1282001, 
       }
+
+
+def GAD(n):
+    """
+    create AD with n variables
+    """
+    AD = {}
+    for ky in GC(n):
+        val = int(rd.random()*10**rd.randint(2,7))
+        if (-1)**rd.randint(0,3) > 0:
+            AD[ky] = val
+        else:
+            AD[ky] = 0
+    return AD
 
 
 def do1(house_number, slice):
@@ -109,12 +125,12 @@ def do3(house_number):
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
     data2 = read_REFIT(file_path)
     
-    do_plot(data2, titles='House'+str(house_number), do_show=False, 
-            fig_types=('.eps', ))
+    do_plot2(data2, titles='House'+str(house_number), do_show=False, 
+            fig_types=('_.eps', ))
 
 if __name__ == "__main__":
 
-    house_number = 15
+    house_number = 8
     slice = 9
     n_app = 3
     # house_number = (1, 2, 3, 4, 5, 
@@ -129,6 +145,9 @@ if __name__ == "__main__":
               11, 12, 13, 15, 16, 
               17, 18, 19, 20, 21, ):
         do3(k)
+        
     # do3(house_number)
-    # do_plot(AD)
-    
+    # AD = GAD(9)
+    # print(AD)
+    do_plot2(AD, fig_types=('-.eps',), do_show=True)
+    print(f'{sum(AD.values())}')
