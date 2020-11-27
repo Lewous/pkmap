@@ -474,50 +474,55 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
                    titles="", pats=[]):
     """
     plot WKMap with markers around
+    using `fig.add_gridspec'
     data3: a dict 
 
+    ====== curtion! the use of x & y are mixed!
     """
     global file_name
     print(f'{file_name=}')
     # fill in data
     appQ = len(tuple(data3.keys())[0])  # total number of appliance
-    nx = int(appQ / 2)
-    ny = appQ - nx
+    ny = int(appQ / 2)
+    nx = appQ - ny
 
     n_M, *M = GMI(appQ)
     n_L, n_R, n_B, n_T = n_M
     wdd = {         # n_of_variables: (wdx, wdy, magnify_of_lxy)
-        7: (0.8, 1.2),
-        9: (1.182, 1, 0.6), 
+        0: (0.6, 0.6, 0.4, 0),      # the default parameter
+        # 7: (0.8, 1.2),
+        # 9: (1.182, 1, 0.6), 
+        9:(0.4, 0.4, 0.35, -0.2),
     }
-    wdx, wdy, mg = wdd[appQ]
-    # wdx = 0.6
-    # wdy = 1
+    if appQ in wdd.keys():
+        wdx, wdy, mg, wfx = wdd[appQ]
+    else: 
+        wdx, wdy, mg, wfx = wdd[0]
+    # wfx: width fixer of the figsize
+    # I don't know why there is a slightly offset
+    # so a small fixer may be a quick repair pack
+
     wd1 = 0.3
     wd2 = 0
-    # mg = 0.4
     lx = mg*2**nx
     ly = mg*2**ny
-    # if mod(appQ, 2):
-    fig = plt.figure(figsize=((n_T+n_B)*wdy+ly, (n_L+n_R)*wdx+lx))
+    print(f'{((n_L+n_R)*wdx+lx, (n_T+n_B)*wdy+ly)}')
+    print(f'{(n_L*wdx, lx, n_R*wdx)}')
+    print(f'{(n_T*wdy, ly, n_B*wdy)}')
+
+    fig = plt.figure(figsize=((n_L+n_R)*wdx+lx+wfx, (n_T+n_B)*wdy+ly), 
+                    constrained_layout=True)
     # fig = plt.figure(figsize=(ly, lx))
     gs = fig.add_gridspec(3, 3,  
                 width_ratios=(n_L*wdx, lx, n_R*wdx), 
                 height_ratios=(n_T*wdy, ly, n_B*wdy),
                 left=0, right=1, bottom=0, top=1,
-                wspace=0.05, hspace=0.05)
-    # else:
-    #     fig = plt.figure(figsize=(8, 8))
-    #     gs = fig.add_gridspec(3, 3,  
-    #                 width_ratios=(n_L*wd, 6, n_R*wd), 
-    #                 height_ratios=(n_T*wd, 6, n_B*wd),
-    #                 left=0.1, right=0.9, bottom=0.1, top=0.9,
-    #                 wspace=0.05, hspace=0.05)
+                wspace=0.02, hspace=0.06)
 
     ax = fig.add_subplot(gs[1,1])
     # ====== `ekmap' is the contant of a subplot ======
-    ekmap = KM(nx, ny)      # preparing a container
-    ekback = KM(nx, ny)     # backgroud color
+    ekmap = KM(ny, nx)      # preparing a container
+    ekback = KM(ny, nx)     # backgroud container
     ek = 1
     vmax = log(sum(tuple(data3.values())))
 
@@ -528,13 +533,13 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
                 # d > 0
                 ekmap.loc[_ind, _col] = log(d)/ek
             else:
-            #     # d == 0
+                # d == 0
                 ekback.loc[_ind, _col] = 0.04
     
     ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
     ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=0, vmax=vmax)
-    ax.set_yticks(arange(2**nx))
-    ax.set_xticks(arange(2**ny))
+    ax.set_yticks(arange(2**ny))
+    ax.set_xticks(arange(2**nx))
     ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
     ax.set_xticklabels(ekmap.columns.values,
                        fontfamily='monospace', rotation=45)
@@ -553,7 +558,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
             ax_S = fig.add_subplot(pl, sharey=ax)
         else:
             ax_S = fig.add_subplot(pl)
-        print(f'{S=}')
+        print(f'{S}')
         cf1 = wd1
         cf2 = 0.1
         for margin in S.items():
@@ -575,25 +580,25 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
                         (cf1, m_st), 0-cf1-m_ty, m_itl, fill=False))
                     ax_S.text(0-m_ty, m_tx, mag_n, alpha=1, 
                         ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='large')
+                        family='monospace', size='xx-large')
                 elif xy in ('R', ):
                     ax_S.add_patch(plt.Rectangle(
                         (0-cf1, m_st), cf1+m_ty, m_itl, fill=False))
                     ax_S.text(m_ty, m_tx, mag_n, alpha=1, 
                         ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='large')
+                        family='monospace', size='xx-large')
                 elif xy in ('B', ):
                     ax_S.add_patch(plt.Rectangle(
                         (m_st, cf1), m_itl, 0-cf1-m_ty, fill=False))
                     ax_S.text(m_tx, 0-m_ty, mag_n, alpha=1, 
                         ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='large')
+                        family='monospace', size='xx-large')
                 elif xy in ('T', ):
                     ax_S.add_patch(plt.Rectangle(
                         (m_st, 0-cf1), m_itl, cf1+m_ty, fill=False))
                     ax_S.text(m_tx, m_ty, mag_n, alpha=1, 
                         ha='center', va='center', backgroundcolor='w',
-                        family='monospace', size='large')
+                        family='monospace', size='xx-large')
         
         if   xy in ('L', ):
             ax_S.set_xlim(left=0-n_L*wd1+wd2, right=0)
@@ -649,7 +654,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         # see in https://stackoverflow.com/questions/62084819/
         plt.savefig('./figs/EKMap' +
                     file_name[5:] + 
-                    str(time())[-5:] + 
+                    # str(time())[-5:] + 
                     fig_type, 
                     bbox_inches='tight')
 
