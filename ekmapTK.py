@@ -294,7 +294,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     4. filtrate to on/off data
 
     """
-    threshold = 5       # power data large than this view as on state
+    threshold = 0       # power data large than this view as on state
 
     global TOTAL_LINE
     global FILE_PATH
@@ -543,7 +543,10 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
     ax.set_xticklabels(ekmap.columns.values,
                        fontfamily='monospace', rotation=45)
-    print(f'{nx=}'+', '+f'{ny=}')
+    if pats:
+        # `pats' is not empty, do aditional draw
+        for pat in pats:
+            ax.add_patch(copy(pat))
     # ax.spines['top'].set_visible(False)
     # ax.spines['right'].set_visible(False)
     # ax.spines['bottom'].set_visible(False)
@@ -608,45 +611,10 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
             ax_S.set_ylim(bottom=0-n_B*wd1+wd2, top=0)
         elif xy in ('T',):
             ax_S.set_ylim(bottom=0, top=n_T*wd1-wd2)
+            if titles:
+                ax_S.set_title(titles, size=24)
         ax_S.axis('off')
 
-    # ax_B = fig.add_subplot(gs[2,1], sharex=ax)
-    # ax_B.add_patch(plt.Rectangle((1.5, 1), 1.99, -1.2, fill=False))
-    # ax_B.text(2.5, -0.2, r'A3', 
-    #     ha='center', va='center', backgroundcolor='w',
-    #     family='monospace', size='xx-large')
-    # ax_B.set_ylim(bottom=-0.3, top=0)
-    # ax_B.axis('off')
-
-    # ax_L = fig.add_subplot(gs[1,0], sharey=ax)
-    # ax_L.add_patch(plt.Rectangle((1, 1.5), -1.2, 1.99, fill=False))
-    # ax_L.text(-0.2, 2.5, r'A1', alpha=1, 
-    #     ha='center', va='center', backgroundcolor='w',
-    #     family='monospace', size='xx-large')
-    # ax_L.set_xlim(left=-0.3, right=0)
-    # ax_L.axis('off')
-
-    # ax_R = fig.add_subplot(gs[1,2], sharey=ax)
-    # ax_R.add_patch(plt.Rectangle((-1, 0.5), 1.2, 2, fill=False))
-    # ax_R.text(0.2, 1.5, r'A2', alpha=1, 
-    #     ha='center', va='center', backgroundcolor='w', 
-    #     family='monospace', size='xx-large')
-    # ax_R.set_xlim(left=0, right=0.3)
-    # ax_R.axis('off')
-
-
-    title = copy(titles)
-    if title:
-        # `title' has been specified
-        ax.set_title(title, size=24)
-        # see in https://stackoverflow.com/questions/42406233/
-        pass
-
-    if pats:
-        # `pats' is not empty, do aditional draw
-        for pat in pats:
-            ax.add_patch(copy(pat))
-            # see in https://stackoverflow.com/questions/47554753
     # fig.tight_layout()
 
     for fig_type in fig_types:
