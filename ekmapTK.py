@@ -294,7 +294,7 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     4. filtrate to on/off data
 
     """
-    threshold = 0       # power data large than this view as on state
+    threshold = 5       # power data large than this view as on state
 
     global TOTAL_LINE
     global FILE_PATH
@@ -306,6 +306,28 @@ def read_REFIT(file_path="", save_file=False, slice=None):
     file_name = findall('/(.+)\.', file_path)[0]
     file_dir = '/'.join(file_path.split('/')[:-1])
     # file_path.split('/')[-1].split('.')[:-1][0]
+
+    # if already have, return directly
+    if not slice:
+        for dirpath,dirnames,files in os.walk('./'):
+            EK_name = 'EKMap' + file_name[5:] + '.txt'
+            if EK_name in files:
+                with open(file_dir + '/' + EK_name, 'r') as f:
+                    data0 = {line.split(':')[0]:int(line.split(':')[1]) for line in f.readlines()}
+                print('='*6+' read from '+EK_name+'! '+'='*6)
+                return data0
+    else:
+        for dirpath,dirnames,files in os.walk('./'):
+            EK_name = 'EKMap' + file_name[5:] + '_'
+            if EK_name+ '1in' + str(slice) +'.txt' in files:
+                data2 = [x for x in range(slice)]
+                for nslice in range(slice):
+                    EK_name2 = EK_name + str(nslice+1) + 'in' + str(slice)
+                    with open(file_dir + '/' + EK_name2 + '.txt', 'r') as f:
+                        data0 = {line.split(':')[0]:int(line.split(':')[1]) for line in f.readlines()}
+                    data2[nslice] = data0
+                print('='*6+' read from '+EK_name + 'xin' + str(slice)+'! '+'='*6)
+                return data2
 
     with tqdm(leave=False,
               bar_format="reading " + file_name + " ...") as pybar:
@@ -394,7 +416,6 @@ def read_REFIT(file_path="", save_file=False, slice=None):
         # `slice' is integer, will slice
         # data2 is a list of dict with `slice' items
         data2 = result.copy()
-
         print(
             f'{sum([sum(list(data2[k].values())) for k in range(slice)])=}' + '\n')
         pass
@@ -403,17 +424,26 @@ def read_REFIT(file_path="", save_file=False, slice=None):
         # `slice' is None, won't slice
         # integrate `result' as `data2'
         data2 = val0.copy()
-
         data2 = {k: sum([result[t][k] for t in range(len(result))])
                  for k in result[0].keys()}
 
         print(f'{sum(tuple(data2.values()))=}')
 
     # save data2
-    if save_file:
-        with open(file_dir + '/EKMap' + file_name[5:] + '.csv', 'w') as f:
+    if save_file and not slice:
+        EK_name = 'EKMap' + file_name[5:]
+        with open(file_dir + '/' + '.txt', 'w') as f:
             for k in data2.items():
                 f.write(':'.join([k[0], str(k[1])]) + '\n')
+        print('='*6+' saved '+ EK_name +'! '+'='*6)
+    elif save_file:
+        EK_name = 'EKMap' + file_name[5:] + '_'
+        for nslice, data2 in zip(range(slice), data2):
+            EK_name2 = EK_name + str(nslice+1) + 'in' + str(slice)
+            with open(file_dir + '/' + EK_name2 + '.txt', 'w') as f:
+                for k in data2.items():
+                    f.write(':'.join([k[0], str(k[1])]) + '\n')
+        print('='*6+' saved '+ EK_name + 'xin' + str(slice) +'! '+'='*6)
 
     return data2
 
