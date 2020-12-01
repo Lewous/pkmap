@@ -120,25 +120,27 @@ def do2(house_number, slice, n_app):
     return print('-'*20)
 
 
-def do3(house_number, titles='', **kwargs):
+def do3(house_number, titles='', slice = '', **kwargs):
     """
     do basic single plot
     """
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
-    data2 = read_REFIT(file_path)
-    
-    do12(data2, '-3-7-8', fig_types=('_1.eps','_1.png',),
-        do_show=False, 
-        # titles='House'+str(house_number), 
-        **kwargs)
-    do12(data2, '-3-4-7-8', fig_types=('_1.eps','_1.png',),
-        do_show=False, 
-        # titles='House'+str(house_number), 
-        **kwargs)
-    return do12(data2, 378, ('_2.eps','_2.png',),
-                do_show=False, 
-                # titles='House'+str(house_number), 
-                **kwargs)
+    data2 = read_REFIT(file_path, save_file=True, slice=slice)
+
+    # do12(data2, '-3-7-8', fig_types=('_1.eps','_1.png',),
+    #     do_show=False, 
+    #     # titles='House'+str(house_number), 
+    #     **kwargs)
+    # do12(data2, '-3-4-7-8', fig_types=('_3.eps','_3.png',),
+    #     do_show=False, 
+    #     # titles='House'+str(house_number), 
+    #     **kwargs)
+    # do12(data2, 378, fig_types=('_2.eps','_2.png',),
+    #             do_show=False, 
+    #             # titles='House'+str(house_number), 
+    #             **kwargs)
+
+    return 0
     
 
 def do12(data, p2hs, cols = ('c', 'b', 'k'), **kwargs):
@@ -188,7 +190,7 @@ if __name__ == "__main__":
     #                 6, 7, 8, 9, 10,
     #                 11, 12, 13, 15, 16, 
     #                 17, 18, 19, 20, 21, )
-    # do1(house_number, slice)
+    do3(house_number, slice = slice)
     # do2(house_number, slice, n_app)
 
     # for k in (1, 2, 3, 4, 5, 
@@ -196,8 +198,8 @@ if __name__ == "__main__":
     #           11, 12, 13, 15, 16, 
     #           17, 18, 19, 20, 21, ):
     #     do3(k)
-        
-    do3(house_number)
+
+    # do3(house_number)
     # AD = GAD(9)
     # print(AD)
     p2h =''    # pats to hightlight
