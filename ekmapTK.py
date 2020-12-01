@@ -451,6 +451,8 @@ def read_REFIT(file_path="", save_file=False, slice=None):
 def read_EKfile(file_path):
     """
     loading data from my format
+
+    not need, imbedded into read_REFIT
     """
     with open(file_path, 'r') as f:
         data2 = {k.split(':')[0]: int(k.split(':')[1]) for k in f}
@@ -577,10 +579,6 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         # `pats' is not empty, do aditional draw
         for pat in pats:
             ax.add_patch(copy(pat))
-    # ax.spines['top'].set_visible(False)
-    # ax.spines['right'].set_visible(False)
-    # ax.spines['bottom'].set_visible(False)
-    # ax.spines['left'].set_visible(False)
     ax.axis('off')
 
     for S, pl, xy in zip(M, (gs[1, 0], gs[1,2], gs[2,1], gs[0,1]), ('L','R','B','T')):
@@ -596,42 +594,36 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         cf2 = 0.1
         for margin in S.items():
             mag_n = margin[0]
-            # like `A1'
+            # dict.key, like `A1'
             mag_v = margin[1]
-            # mag_v like `(2, ((3.5, 7.48),))'
+            # dict.value like `(2, ((3.5, 7.48),))'
             # or `(1, ((0.5, 2.5), (4.5, 6.5)))'
             ofst = mag_v[0]     # offset, a number start from 1
-            # `mag_v[1]' like `((3.5, 7.48),)'
-            # or `((0.5, 2.5), (4.5, 6.5))'
+            args_text = {'ha':'center', 'va':'center', 'backgroundcolor':'w', 
+                        'family':'monospace', 'size':'xx-large'}
             for ind in mag_v[1]:
+                # `mag_v[1]' like `((3.5, 7.48),)'
+                # or `((0.5, 2.5), (4.5, 6.5))'
                 m_st = ind[0]           # start
                 m_itl = ind[1] - ind[0]     # interval
-                m_tx = m_st + m_itl/2       # place to text, parallel to the axis
+                m_tx = m_st + m_itl/2       # coordinate of text, parallel to the axis
                 m_ty = cf1*ofst - cf2       # vartical to the axis
                 if   xy in ('L', ):
                     ax_S.add_patch(plt.Rectangle(
                         (cf1, m_st), 0-cf1-m_ty, m_itl, fill=False))
-                    ax_S.text(0-m_ty, m_tx, mag_n, alpha=1, 
-                        ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='xx-large')
+                    ax_S.text(0-m_ty, m_tx, mag_n, **args_text)
                 elif xy in ('R', ):
                     ax_S.add_patch(plt.Rectangle(
                         (0-cf1, m_st), cf1+m_ty, m_itl, fill=False))
-                    ax_S.text(m_ty, m_tx, mag_n, alpha=1, 
-                        ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='xx-large')
+                    ax_S.text(m_ty, m_tx, mag_n, **args_text)
                 elif xy in ('B', ):
                     ax_S.add_patch(plt.Rectangle(
                         (m_st, cf1), m_itl, 0-cf1-m_ty, fill=False))
-                    ax_S.text(m_tx, 0-m_ty, mag_n, alpha=1, 
-                        ha='center', va='center', backgroundcolor='w', 
-                        family='monospace', size='xx-large')
+                    ax_S.text(m_tx, 0-m_ty, mag_n, **args_text)
                 elif xy in ('T', ):
                     ax_S.add_patch(plt.Rectangle(
                         (m_st, 0-cf1), m_itl, cf1+m_ty, fill=False))
-                    ax_S.text(m_tx, m_ty, mag_n, alpha=1, 
-                        ha='center', va='center', backgroundcolor='w',
-                        family='monospace', size='xx-large')
+                    ax_S.text(m_tx, m_ty, mag_n, **args_text)
         
         if   xy in ('L', ):
             ax_S.set_xlim(left=0-n_L*wd1+wd2, right=0)
