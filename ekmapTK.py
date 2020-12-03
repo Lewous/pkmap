@@ -13,6 +13,7 @@ from numpy import full
 from numpy import save, load
 from numpy import array
 from numpy import pi
+from numpy import meshgrid
 
 from pandas import DataFrame
 from pandas import read_csv
@@ -121,7 +122,7 @@ def GC(n):
         return tuple(['0'+k for k in a] + ['1'+k for k in a[::-1]])
 
 
-def KM(a, b):
+def KM(a, b, default=nan):
     """
     generate Karnaugh map template
     ====== template only ======
@@ -135,7 +136,7 @@ def KM(a, b):
     a = int(fabs(a))
     b = int(fabs(b))
 
-    return DataFrame(full([2**a, 2**b], nan),
+    return DataFrame(full([2**a, 2**b], default),
                      index=GC(a), columns=GC(b))
 
 
@@ -509,7 +510,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     using `fig.add_gridspec'
     data3: a dict 
 
-    ====== curtion! the use of x & y are mixed!
+    ====== curtion! the use of x & y are mixed! ======
     """
     global file_name
     print(f'{file_name=}')
@@ -523,7 +524,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     wdd = {         # n_of_variables: (wdx, wdy, magnify_of_lxy)
         0: (0.6, 0.6, 0.4, 0),      # the default parameter
         # 7: (0.8, 1.2),
-        # 9: (1.182, 1, 0.6), 
+        4: (1, 1, 0.6, 0), 
         9:(0.4, 0.4, 0.35, -0.2),
     }
     if appQ in wdd.keys():
@@ -567,7 +568,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
             else:
                 # d == 0
                 ekback.loc[_ind, _col] = 0.04
-    
+
     ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
     ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=0, vmax=vmax)
     ax.set_yticks(arange(2**ny))
@@ -624,7 +625,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
                     ax_S.add_patch(plt.Rectangle(
                         (m_st, 0-cf1), m_itl, cf1+m_ty, fill=False))
                     ax_S.text(m_tx, m_ty, mag_n, **args_text)
-        
+
         if   xy in ('L', ):
             ax_S.set_xlim(left=0-n_L*wd1+wd2, right=0)
         elif xy in ('R', ):
@@ -638,7 +639,76 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         ax_S.axis('off')
 
     # fig.tight_layout()
+    if isinstance(fig_types, str):
+        fig_types = (fig_types, )
+    for fig_type in fig_types:
+        plt.pause(1e-13)
+        # see in https://stackoverflow.com/questions/62084819/
+        plt.savefig('./figs/EKMap' +
+                    file_name[5:] + 
+                    # str(time())[-5:] + 
+                    fig_type, 
+                    bbox_inches='tight')
 
+    if do_show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return fig
+
+
+def do_plot3(data3, cmap='inferno', fig_types=(), do_show=True,
+                   titles="", pats=[]):
+    """
+    plot WKMap with 3D surface
+    data3: a dict 
+
+    """
+    global file_name
+    print(f'{file_name=}')
+    # fill in data
+    appQ = len(tuple(data3.keys())[0])  # total number of appliance
+    ny = int(appQ / 2)
+    nx = appQ - ny
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    
+    # ====== `ekmap' is the contant of a subplot ======
+    ekmap = KM(ny, nx, 0)      # preparing a container
+    ek = 1
+    for _ind in ekmap.index:
+        for _col in ekmap.columns:
+            d = data3[_ind + _col]
+            if d:
+                # d > 0
+                ekmap.loc[_ind, _col] = log(d)/ek
+            else:
+                # d == 0
+                pass
+
+    X = arange(2**nx)
+    Y = arange(2**ny)
+    X, Y = meshgrid(X, Y)
+    ax.plot_surface(X, Y, ekmap, cmap=cmap)
+    ax.set_yticks(arange(2**ny))
+    ax.set_xticks(arange(2**nx))
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_ylabel(r'$A_1A_2A_3A_4$', 
+                family='monospace', size=16)
+    ax.set_xlabel(r'$A_5A_6A_7A_8A_9$',
+                family='monospace', size=16)
+    # if pats:
+    #     # `pats' is not empty, do aditional draw
+    #     for pat in pats:
+    #         ax.add_patch(copy(pat))
+    ax.set_zticks([])
+    # ax.axis('off')
+
+    # fig.tight_layout()
+    if isinstance(fig_types, str):
+        fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
@@ -702,6 +772,11 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
+    xlabel = "".join([r'$A_' + str(x+1) + r'$' for x in range(ny)])
+    ylabel = "".join([r'$A_' + str(x+1) + r'$' for x in range(ny, ny+nx)])
+    ax.set_ylabel(xlabel,family='monospace', size=20)
+    ax.set_xlabel(ylabel,family='monospace', size=20)
+    
 
     title = copy(titles)
     if title:
@@ -715,13 +790,15 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
         for pat in pats:
             ax.add_patch(copy(pat))
             # see in https://stackoverflow.com/questions/47554753
-    # fig.tight_layout()
+    fig.tight_layout()
 
+    if isinstance(fig_types, str):
+        fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
         plt.savefig('./figs/EKMap' +
-                    file_name[5:] +str(time.time())[-5:] + fig_type, 
+                    file_name[5:] +str(time())[-5:] + fig_type, 
                     bbox_inches='tight')
 
     if do_show:

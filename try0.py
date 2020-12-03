@@ -6,7 +6,7 @@
 # from ekmapTK import filter
 from ekmapTK import read_REFIT, slice_REFIT
 from ekmapTK import read_EKfile, GC
-from ekmapTK import do_plot, do_plot2
+from ekmapTK import do_plot, do_plot2, do_plot3
 
 # from numpy import power
 # from numpy import pi
@@ -47,10 +47,12 @@ AD = {'0000': 0,
 
 # pre-set pats data: x_data, y_data, width, hight
 pat_data = {
-    '378': ((0.5, 16.5), (1.5, 9.5), 14, 4),
+    '3(7+8+9)': ((0.5, 16.5), (1.5, 9.5), 14, 4),
     '-3-7-8': ((-2.5, 13.5, 29.5), (-2.5, 5.5, 13.5), 4, 4),
-    '-3-4-7-8': ((-1.5, 14.5, 30.5), (-1.5, 6.5, 14.5), 2, 2),
-    '489': ((0.5,8.5,16.5,24.5), (0.5,4.5,8.5,12.5),6,2)
+    '-3-4-7-8': ((-2.5, 13.5, 29.5), (-1.5, 6.5, 14.5), 4, 2),
+    '-3-7-8-9': ((-1.5, 14.5, 30.5), (-2.5, 5.5, 13.5), 2, 4),
+    '4(8+9)': ((0.5,8.5,16.5,24.5), (0.5,4.5,8.5,12.5),6,2), 
+
 }
 
 def GAD(n):
@@ -120,17 +122,15 @@ def do2(house_number, slice, n_app):
     return print('-'*20)
 
 
-def do3(house_number, titles='', slice = '', **kwargs):
+def do3(house_number, p2hs, titles='', slice = '', **kwargs):
     """
     do basic single plot
     """
     file_path = 'REFIT/CLEAN_House' + str(house_number) + '.csv'
     data2 = read_REFIT(file_path, save_file=True, slice=slice)
 
-    # do12(data2, '-3-7-8', fig_types=('_1.eps','_1.png',),
-    #     do_show=False, 
-    #     # titles='House'+str(house_number), 
-    #     **kwargs)
+    # do_plot3(data2)
+    do12(data2, p2hs, **kwargs)
     # do12(data2, '-3-4-7-8', fig_types=('_3.eps','_3.png',),
     #     do_show=False, 
     #     # titles='House'+str(house_number), 
@@ -139,9 +139,9 @@ def do3(house_number, titles='', slice = '', **kwargs):
     #             do_show=False, 
     #             # titles='House'+str(house_number), 
     #             **kwargs)
-
+    # print(**kwargs)
     return 0
-    
+
 
 def do12(data, p2hs, cols = ('c', 'b', 'k'), **kwargs):
     '''
@@ -159,11 +159,14 @@ def do12(data, p2hs, cols = ('c', 'b', 'k'), **kwargs):
     else:
         p2hs = ()       # empty tuple
 
+    if isinstance(cols, str):
+        cols = (cols, cols, cols, )
+
     highL=[]
     ofst = 0.6      # offset
     for p2h, col, ofst in zip(p2hs, 
                              cols, 
-                             (0.2, 0.4, 0.6)):
+                             (0.2, 0.2, 0.6)):
         if not p2h:
             # is empty or None or ...
             continue
@@ -190,7 +193,7 @@ if __name__ == "__main__":
     #                 6, 7, 8, 9, 10,
     #                 11, 12, 13, 15, 16, 
     #                 17, 18, 19, 20, 21, )
-    do3(house_number, slice = slice)
+    # do3(house_number, '', slice = None, dd = 's', fs = 'ff')
     # do2(house_number, slice, n_app)
 
     # for k in (1, 2, 3, 4, 5, 
@@ -202,7 +205,8 @@ if __name__ == "__main__":
     # do3(house_number)
     # AD = GAD(9)
     # print(AD)
-    p2h =''    # pats to hightlight
-    # do12(AD, p2h, )
+    # do_plot3(AD, fig_types='.eps')
+    p2h =('4(8+9)', )    # pats to hightlight
+    do3(4, p2h, fig_types='_2/.eps', cols='c')
     # do_plot2(AD, fig_types=('.png',), pats=highL, do_show=True)
     # # print(f'{sum(AD.values())}')
