@@ -17,21 +17,27 @@ from numpy import meshgrid
 
 from pandas import DataFrame
 from pandas import read_csv
+from pandas import read_excel
 from pandas import concat
+
 from multiprocessing import Pool
 
-from time import time
 from tqdm import tqdm
 # import re
-from re import findall
-from os import listdir
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 # import seaborn as sn
+
+# python embedded library
 from copy import copy
+from time import time
+
+from re import findall
+from os import listdir
 import os
+from collections.abc import Iterable 
 
-
+from appliance_data import appliance_data as app_data
 TOTAL_LINE = 6960002
 FILE_PATH = './REFIT/CLEAN_House1.csv'
 val0 = {}
@@ -266,6 +272,37 @@ def do_count(arg2):
         val[nw] += 1
 
     return val
+
+
+def plot_bar(data2):
+    """
+    pandas embedded plot.bar will stuck
+    
+    data2: a pandas series object
+
+    val: return object, a dict of dict
+    val['Appliance2'] = {
+
+    }
+    """
+    # n_data = len(tuple(data2.keys())[0])
+    # # is 9 in REFIT
+
+    thrd = int(len(data2)/10000)
+    val = {}
+    for d in data2.values:
+        if d in val.keys():
+            val[d] += 1
+        else:
+            val[d] = 1
+    val2 = {}
+    for k, it in val.items():
+        if it > thrd:
+            val2[k] = it
+    # plt.bar(val2.keys(), val2.items())
+    # plt.show()
+    
+    return {k:val2[k] for k in sorted(val2.keys())}
 
 
 def read_REFIT(file_path="", save_file=False, slice=None):
@@ -539,9 +576,9 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     wd2 = 0
     lx = mg*2**nx
     ly = mg*2**ny
-    print(f'{((n_L+n_R)*wdx+lx, (n_T+n_B)*wdy+ly)}')
-    print(f'{(n_L*wdx, lx, n_R*wdx)}')
-    print(f'{(n_T*wdy, ly, n_B*wdy)}')
+    # print(f'{((n_L+n_R)*wdx+lx, (n_T+n_B)*wdy+ly)}')
+    # print(f'{(n_L*wdx, lx, n_R*wdx)}')
+    # print(f'{(n_T*wdy, ly, n_B*wdy)}')
 
     fig = plt.figure(figsize=((n_L+n_R)*wdx+lx+wfx, (n_T+n_B)*wdy+ly), 
                     constrained_layout=True)
@@ -590,7 +627,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
             ax_S = fig.add_subplot(pl, sharey=ax)
         else:
             ax_S = fig.add_subplot(pl)
-        print(f'{S}')
+        # print(f'{S}')
         cf1 = wd1
         cf2 = 0.1
         for margin in S.items():
@@ -639,7 +676,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         ax_S.axis('off')
 
     # fig.tight_layout()
-    if isinstance(fig_types, str):
+    if not isinstance(fig_types, Iterable):
         fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
@@ -707,7 +744,7 @@ def do_plot3(data3, cmap='inferno', fig_types=(), do_show=True,
     # ax.axis('off')
 
     # fig.tight_layout()
-    if isinstance(fig_types, str):
+    if not isinstance(fig_types, Iterable):
         fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
@@ -792,7 +829,7 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
             # see in https://stackoverflow.com/questions/47554753
     fig.tight_layout()
 
-    if isinstance(fig_types, str):
+    if not isinstance(fig_types, Iterable):
         fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
@@ -831,7 +868,7 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
     ny = int(appQ - nx)
 
     # number of slice
-    n_slice = len(titles)
+    n_slice = len(data3)
 
     # ====== prepare for canvas distribute ======
     num_row = int(ceil(sqrt(n_slice)))
@@ -849,6 +886,8 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
     ek = 1
     vmax = log(sum(tuple(data3[0].values())))
     # ax_it = (k for k in axes)
+    if not titles:
+        titles = full(n_slice, None)
     ind = ((c, r) for c in range(num_col) for r in range(num_row))
     for datax, title, in zip(data3, titles, ):
         for _ind in ekmap.index:
@@ -948,7 +987,7 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
         data3 = {''.join([key[s] for s in order_ind]): data2[key]
                  for key in data2.keys()}
         print('do_plot_single')
-        do_plot_single(data3, cmap, fig_types, do_show,
+        do_plot2(data3, cmap, fig_types, do_show,
                        titles, pats)
     else:
         # data2 is a list of dict
@@ -961,23 +1000,25 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
     return 0
 
 
-def slice_REFIT(args):
+def slice_REFIT(file_path, n_slice, n_valid, n_test, n_app, save_dir):
     """
     slice dataset into `n_slice' pieces
     and save for Mingjun Zhong's code
 
     file_path: a string
-    n_slice: integer, number to slice, 10 for house7
+    # house_No: integer, index of house, start from 1 
+    n_slice: integer, pieces of slicing
     n_valid: integer, number of slice for validation
     n_test: integer, number of slice for testing
-    n_app: integer, number of appliance for analysising
+    n_app: integer, number of appliance, start from 1
 
+    can using with: fun(**args_dict)
     """
     global data0
-    file_path, n_slice, n_valid, n_test, n_app, save_dir = args
-    file_name = findall('/(.+)\.', file_path)[0]
+    file_name = findall(r'/(.+)\.csv', file_path)[-1]
     file_dir = '/'.join(file_path.split('/')[:-1])
-    # file_path.split('/')[-1].split('.')[:-1][0]
+    house_No = findall(r'\d+', file_name)[-1]
+    # print(f'{house_No=}')
 
     if data0.empty:
         # reuse `data0' when slicing multiple times
@@ -988,11 +1029,26 @@ def slice_REFIT(args):
         print("use old `data0'")
 
     app = 'Appliance'+str(n_app)    # such as 'Appliance3'
-    name_app = 'freezer'
+
+    # get name_app
+    name_app = read_excel(os.path.join(file_dir, 'MetaData_Tables.xlsx'), 
+                sheet_name='House '+str(house_No), 
+                usecols=('Aggregate', ), ).values[n_app-1][0]
+    # name_app = 'freezer'
+    name_app = name_app.replace(' ', '_')
+
     if not save_dir:
-        save_dir = './' + name_app + '/'
+        save_dir = './_exam_'
+    save_dir = os.path.join(save_dir, name_app)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+        print('create ' + f'{save_dir}')
+    else:
+        # removeall files in `save_dir`
+        # have a clean working dir
+        for fdir, links, files in os.walk(save_dir):
+            [os.remove(os.path.join(fdir, f2)) for f2 in files]
+        print('cleaned ' + f'{save_dir}')
 
     # mean_agg = data0['Aggregate'].mean()
     # std_agg = data0['Aggregate'].std()
@@ -1003,6 +1059,8 @@ def slice_REFIT(args):
     # std_app = datax[(datax>5) & (datax < 800)].std()
     mean_app = 50
     std_app = 13
+    mean_app = app_data[name_app]['mean']
+    std_app = app_data[name_app]['std']
     TOTAL_LINE = len(data0.index)
     print(f'{TOTAL_LINE=}')
     print(f'{(mean_agg, std_agg)=}')
@@ -1012,28 +1070,54 @@ def slice_REFIT(args):
     # x1 is a list
     print(f'{x1=}')
     x2 = ((x1[k], x1[k+1]) for k in range(n_slice))
+    if not isinstance(n_test, Iterable):
+        n_test = (n_test, )
+    if not isinstance(n_valid, Iterable):
+        n_valid = (n_valid, )
+    
+    throd=8
     for ind, k in enumerate(x2):
         ind += 1
-        print(f'{(ind, k)=}')
+        print(f'{(ind, k)}')
         datax = data0.loc[k[0]:k[1], ['Aggregate', app]]
         data_agg = (datax['Aggregate'] - mean_agg) / std_agg
         data_app = (datax[app] - mean_app) / std_app
         data2save = concat([data_agg, data_app], axis=1)
-        if ind == n_test:
+        if ind in n_test:
             # is test set
-            data2save.to_csv(save_dir + name_app + '_test_' + 'S' + str(n_test)
-                             + '.csv', index=False)
+            data2save.to_csv('/'.join([save_dir, name_app]) 
+                             + '_test_' + 'S' + str(n_test)
+                             + '.csv', index=False, mode='a', header=False)
+            dataw = data0.loc[k[0]:k[1], 'Appliance1':'Appliance9']
+            with open('/'.join([save_dir, name_app])
+                             + '_test_codings.txt', 'a') as f:
+                for l in dataw.itertuples(index=False):
+                    f.write(''.join([str(int(u>throd)) for u in l]))
+                    f.write('\n')
             print('\tslice ' + str(ind) + ' for testing')
-        elif ind == n_valid:
+        elif ind in n_valid:
             # is validation set
-            data2save.to_csv(save_dir + name_app + '_valid_' + 'S' + str(n_valid)
-                             + '.csv', index=False)
+            data2save.to_csv('/'.join([save_dir, name_app]) 
+                             + '_valid_' + 'S' + str(n_valid)
+                             + '.csv', index=False, mode='a', header=False)
+            dataw = data0.loc[k[0]:k[1], 'Appliance1':'Appliance9']
+            with open('/'.join([save_dir, name_app])
+                             + '_valid_codings.txt', 'a') as f:
+                for l in dataw.itertuples(index=False):
+                    f.write(''.join([str(int(u>throd)) for u in l]))
+                    f.write('\n')
             print('\tslice ' + str(ind) + ' for validation')
         else:
             # is training set
-            data2save.to_csv(save_dir + name_app + '_training_'
+            data2save.to_csv('/'.join([save_dir, name_app]) 
+                             + '_training_'
                              + '.csv', index=False, mode='a', header=False)
-
+            dataw = data0.loc[k[0]:k[1], 'Appliance1':'Appliance9']
+            with open('/'.join([save_dir, name_app])
+                             + '_train_codings.txt', 'a') as f:
+                for l in dataw.itertuples(index=False):
+                    f.write(''.join([str(int(u>throd)) for u in l]))
+                    f.write('\n')
     return None
 
 
