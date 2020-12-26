@@ -38,6 +38,8 @@ import os
 from collections.abc import Iterable 
 
 from appliance_data import appliance_data as app_data
+
+# default global variables
 TOTAL_LINE = 6960002
 FILE_PATH = './REFIT/CLEAN_House1.csv'
 val0 = {}
@@ -594,20 +596,26 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
     ekmap = KM(ny, nx)      # preparing a container
     ekback = KM(ny, nx)     # backgroud container
     ek = 1
-    vmax = log(sum(tuple(data3.values())))
+    vmax = log(sum(list(data3.values())))*0.8
+    # vmax = max(tuple(data3.values()))
+    # vmin = min(tuple(data3.values()))
+    # vmax = 110
+    vmin = 0
 
     for _ind in ekmap.index:
         for _col in ekmap.columns:
             d = data3[_ind + _col]
             if d:
-                # d > 0
-                ekmap.loc[_ind, _col] = log(d)/ek
+                # d is larger than 0
+                ekmap.loc[_ind, _col] = log(d/ek)
+                # ekmap.loc[_ind, _col] = d
             else:
-                # d == 0
-                ekback.loc[_ind, _col] = 0.04
-
+                # d equals 0
+                ekback.loc[_ind, _col] = 0.06
+    
+    print(f'{(vmax, vmin)=}')
     ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
-    ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=0, vmax=vmax)
+    ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=vmin, vmax=vmax)
     ax.set_yticks(arange(2**ny))
     ax.set_xticks(arange(2**nx))
     ax.set_yticklabels(ekmap.index.values, fontfamily='monospace')
