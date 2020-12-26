@@ -1,0 +1,12 @@
+# environment used in this toolkit
+# the file is manually created since most is generally used
+# no special version is required, I still lay the version 
+# used in my computer for potential problems
+
+
+matplotlib=3.3.1
+numpy=1.19.1
+pandas=1.1.3
+# seaborm=0.11.0      # heatmap plotting, used in early stage
+tqdm=4.50.2         # beautifly counting down 
+xlrd=1.2.0          # for .xlsx file reading
