@@ -61,14 +61,24 @@ do_plot(data)
 
 ![example](figs/EKMap_House16.svg)
 
-In case you want to store the figure, you can do:
+The colormap we used for default is `inferno`,
+where the brigner means more, and the darker mean less.
+Those pretty light blue means the relative combination is missing.
+
+In case you want to change the colormap, you can do:
 
 ```python
-do_plot(data, fig_types = '.png')
+do_plot(data, cmap='viridis')
+```
+
+Or, you can store the figure by:
+
+```python
+do_plot(data, fig_types='.png')
 ```
 
 As the figure type will be passed to `matplotlib.pyplot.savefig`,
-Formats will not be supported except
+formats will not be supported except
 
 ```python
 eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff
