@@ -17,6 +17,11 @@ both on Windows 10 version 2004 and Mojave 10.14.6.
 Since a new format feature introduced in [PEP498](https://www.python.org/dev/peps/pep-0498/)
 is used, Python lower than 3.6 (exclusive) need a few extra adapting.
 
+## Installation
+
+As the `pypi` support is coming,
+A directly clone will be recommanded.
+
 ## How to use
 
 First, you'll need to import a dataset (usually a .csv file)
