@@ -613,7 +613,7 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
                 # d equals 0
                 ekback.loc[_ind, _col] = 0.06
     
-    print(f'{(vmax, vmin)=}')
+    # print(f'{(vmax, vmin)=}')
     ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
     ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=vmin, vmax=vmax)
     ax.set_yticks(arange(2**ny))
@@ -684,8 +684,8 @@ def do_plot2(data3, cmap='inferno', fig_types=(), do_show=True,
         ax_S.axis('off')
 
     # fig.tight_layout()
-    if not isinstance(fig_types, Iterable):
-        fig_types = (fig_types, )
+    # if not isinstance(fig_types, Iterable):
+    #     fig_types = (fig_types, )
     for fig_type in fig_types:
         plt.pause(1e-13)
         # see in https://stackoverflow.com/questions/62084819/
@@ -726,10 +726,10 @@ def do_plot3(data3, cmap='inferno', fig_types=(), do_show=True,
         for _col in ekmap.columns:
             d = data3[_ind + _col]
             if d:
-                # d > 0
+                # d is greater than 0
                 ekmap.loc[_ind, _col] = log(d)/ek
             else:
-                # d == 0
+                # d equals 0
                 pass
 
     X = arange(2**nx)
@@ -796,15 +796,14 @@ def do_plot_single(data3, cmap='inferno', fig_types=(), do_show=True,
         for _col in ekmap.columns:
             d = data3[_ind + _col]
             if d:
-                # d > 0
+                # d is greater than 0
                 ekmap.loc[_ind, _col] = log(d)/ek
             else:
-            #     # d == 0
+            #     # d equals 0
                 ekback.loc[_ind, _col] = 0.02
-    save('ek0.npy', ekmap)
+    # save('ek0.npy', ekmap)
     # ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
 
-    # basecolor = [20 if k else nan for k in ekmap]
     ax.imshow(ekback, cmap='Blues',vmin=0, vmax=1)
     ax.imshow(ekmap, alpha = 1, cmap=cmap, vmin=0, vmax=vmax)
     ax.set_yticks(arange(2**nx))
@@ -882,7 +881,6 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
     num_row = int(ceil(sqrt(n_slice)))
     num_col = int(ceil(n_slice / num_row))
 
-    # fig, axes= plt.subplots(num_row, num_col, figsize=(15, 8))
     fsize = (int(num_row * 2**(ny-nx)*3), num_col*4)
     fig, axes = plt.subplots(
         num_col, num_row, figsize=fsize)
@@ -902,14 +900,13 @@ def do_plot_multi(data3, cmap='inferno', fig_types=(), do_show=True,
             for _col in ekmap.columns:
                 d = datax[_ind + _col]
                 if d:
-                    # d > 0
+                    # d is greater than 0
                     ekmap.loc[_ind, _col] = log(d)/ek
                 else:
-                #     # d == 0
+                    # d equals 0
                     ekback.loc[_ind, _col] = 0.02
         ind2 = next(ind)
         ax = axes[ind2[0], ind2[1]]
-        # ax = ax_it.next()
         # ax.pcolormesh(ekmap, cmap=cmap, vmin=0, vmax=vmax)
         ax.imshow(ekback, cmap='Blues', vmin=0, vmax=1)
         ax.imshow(ekmap, cmap=cmap, vmin=0, vmax=vmax)
@@ -988,6 +985,10 @@ def do_plot(data2, ahead=(), cmap='inferno', fig_types=(), do_show=True,
         appQ = len(tuple(data2[0].keys())[0])
 
     order_ind = new_order(ahead, appQ)
+
+    # input correction
+    if isinstance(fig_types, str):
+        fig_types = (fig_types, )
 
     # function reconsitution
     if isinstance(data2, dict):
