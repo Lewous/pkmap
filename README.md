@@ -47,8 +47,8 @@ data = {
 The `data.keys()` represents the ON/OFF state of each 9 appliances.
 And the `data.values()` means how many times the state combination
 is counted.
-Details about this stuf has been placed in my late paper
-(reference acquired)
+Details about this has been placed in my latest paper
+(reference will be updated soon)
 
 After you feed the plotting function with the `data`,
 a Karnaugh map wil be displayed.
